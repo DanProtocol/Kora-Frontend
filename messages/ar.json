@@ -78,6 +78,32 @@
     "mobileApp": "تطبيق الجوال",
     "openInApp": "افتح في التطبيق",
     "deepLinkWaiting": "في انتظار فتح تطبيق المحفظة…",
+    "networkMismatch": "متصل بـ {current} لكن التطبيق يتطلب {expected}{passphrase}. غيّر شبكة محفظتك للمتابعة.",
+    "passphraseMismatch": " (عدم تطابق العبارة السرية)",
+    "watchOnly": "للمشاهدة فقط",
+    "exitWatchMode": "الخروج من وضع المشاهدة",
+    "switchAccount": "تبديل الحساب",
+    "accountSettings": {
+      "title": "إعدادات الحساب",
+      "description": "اضبط الإشعارات وتحقق من حدود هويتك.",
+      "notifications": "الإشعارات",
+      "identityVerification": "التحقق من الهوية (KYC)"
+    },
+    "kyc": {
+      "status": "حالة KYC",
+      "verified": "تم التحقق",
+      "pending": "قيد المراجعة",
+      "rejected": "مرفوض",
+      "unverified": "غير متحقق منه",
+      "unlimited": "غير محدود",
+      "limit": "الحد: 10,000 دولار",
+      "noneDescription": "تحقق من هويتك لزيادة قدرة التمويل فوق 10,000 USDC وفتح إمكانات التداول الثانوية.",
+      "pendingDescription": "تم إرسال مستنداتك إلى Synaps وهي قيد المراجعة. تكتمل العملية عادةً خلال 5 دقائق.",
+      "rejectedDescription": "تم رفض طلب التحقق. يرجى إعادة إرسال مستندات التحقق.",
+      "verifiedDescription": "تم التحقق من هويتك بالكامل! لديك حدود تمويل غير محدودة وأسواق ثانوية عالمية.",
+      "resubmit": "إعادة إرسال المستندات",
+      "verify": "التحقق عبر Synaps"
+    },
     "trustline": {
       "eurc": {
         "cta": "إضافة خط ثقة EURC",
@@ -168,6 +194,8 @@
     "showing": "عرض {count} فاتورة مدرجة",
     "shareFilters": "مشاركة الفلاتر",
     "shareFiltersCopied": "تم نسخ رابط الفلتر إلى الحافظة",
+    "exportCsv": "تصدير CSV",
+    "exportCsvAria": "تصدير نتائج السوق النشطة إلى CSV",
     "searchPlaceholder": "ابحث بالمدين أو رقم الفاتورة أو الجهة القضائية…",
     "clearSearch": "مسح البحث",
     "filters": "الفلاتر",
@@ -202,6 +230,7 @@
     "recent": "الأحدث",
     "clear": "مسح",
     "sort": {
+      "ariaLabel": "ترتيب الفواتير",
       "aprDesc": "APR: الأعلى إلى الأدنى",
       "aprAsc": "APR: الأدنى إلى الأعلى",
       "amountDesc": "المبلغ: الأعلى إلى الأدنى",
@@ -265,6 +294,7 @@
       "marketplaceSource": "Marketplace"
     },
     "comparison": {
+      "selectionHint": "تحديد المقارنة: تم تحديد {count}. استخدم الأسهم للتنقل والمسافة للتبديل وShift مع الأسهم لتحديد نطاق.",
       "barAriaLabel": "شريط مقارنة الفواتير",
       "compare": "مقارنة",
       "loading": "جارٍ التحميل {id}…",
@@ -376,6 +406,11 @@
       "review": "الرفع والمراجعة"
     },
     "fields": {
+      "addressBook": {
+        "noAddress": "لا يوجد عنوان لحفظه",
+        "invalidAddress": "تنسيق عنوان Stellar غير صالح",
+        "saved": "تم الحفظ في دفتر العناوين"
+      },
       "invoiceNumber": "رقم الفاتورة",
       "invoiceNumberPlaceholder": "INV-2024-0001",
       "debtorName": "اسم الشركة المدينة",
@@ -419,9 +454,28 @@
       "youReceive": "مبلغ التمويل (ما ستحصل عليه)",
       "investorPayout": "مدفوعات المستثمر عند الاستحقاق",
       "capitalSeek": "رأس المال المطلوب ({percent}%)",
-      "yieldCost": "تكلفة العائد ({percent}%)"
+      "yieldCost": "تكلفة العائد ({percent}%)",
+      "netFinanceCost": "صافي تكلفة التمويل (العائد)",
+      "effectiveApr": "APR الفعلي"
     },
+    "notAvailable": "غير متاح",
     "upload": {
+      "document": "مستند الفاتورة",
+      "progress": {
+        "uploading": "جارٍ رفع الفاتورة إلى IPFS…",
+        "building": "جارٍ بناء المعاملة على السلسلة…",
+        "ipfsPin": "تثبيت IPFS",
+        "onChainMint": "السك على السلسلة",
+        "pinDescription": "جارٍ تثبيت مستند الفاتورة على IPFS. يثبت ذلك تجزئة المستند على السلسلة.",
+        "chainDescription": "جارٍ بناء ومحاكاة معاملة السك في Soroban."
+      },
+      "ipfsUnavailable": {
+        "title": "تخزين IPFS غير متاح مؤقتًا.",
+        "description": "لا يمكن سك فاتورتك الآن. تم حفظ جميع بيانات النموذج؛ يمكنك المحاولة عند عودة الخدمة.",
+        "retrying": "جارٍ التحقق تلقائيًا… (المحاولة {count})",
+        "retryAriaLabel": "إعادة محاولة فحص الحالة",
+        "checking": "جارٍ التحقق من توفر تخزين IPFS…"
+      },
       "dragDrop": "اسحب وأفلت ملف PDF للفاتورة هنا",
       "orClick": "أو انقر للاستعراض",
       "maxSize": "PDF فقط · الحجم الأقصى 10 ميغابايت",
@@ -439,6 +493,8 @@
       }
     },
     "review": {
+      "summary": "الملخص",
+      "financingCapital": "رأس مال التمويل",
       "title": "المراجعة والسك",
       "subtitle": "تأكد من تفاصيل فاتورتك قبل السك على Soroban",
       "mintButton": "سك رمز NFT للفاتورة",
@@ -489,6 +545,20 @@
       "description": "وجدنا مسودة محفوظة من جلستك السابقة. هل تريد الاستمرار من حيث توقفت؟",
       "resume": "استئناف المسودة",
       "discard": "تجاهل"
+    },
+    "errors": {
+      "partialIpfsCleanup": "فشل إنشاء الفاتورة. تمت إزالة الملفات التي رُفعت إلى IPFS.",
+      "partialIpfsCleanupFailed": "فشل إنشاء الفاتورة. تعذر إزالة بعض الملفات المرفوعة وستنتهي صلاحيتها تلقائيًا.",
+      "mintFailed": "تعذر تجهيز الفاتورة للتوقيع. يرجى المحاولة مرة أخرى."
+    },
+    "transaction": {
+      "signingTitle": "التوقيع مطلوب",
+      "submittingTitle": "جارٍ إرسال المعاملة",
+      "signingDescription": "افتح إضافة محفظة Stellar في المتصفح ووقّع المعاملة للسماح بسك NFT الفاتورة على السلسلة.",
+      "submittingDescription": "جارٍ بث معاملتك إلى شبكة Stellar. في انتظار إجماع السجل…",
+      "failedTitle": "فشل السك",
+      "failedDescription": "حدث خطأ أثناء سك فاتورتك. يرجى المحاولة مرة أخرى.",
+      "retry": "إعادة محاولة السك"
     }
   },
   "smeDashboard": {
@@ -1086,7 +1156,9 @@
       "resetDefaults": "إعادة الضبط إلى الافتراضي",
       "toggleAriaLabel": "تبديل {label}",
       "tourSection": {
-        "title": "جولة الإعداد"
+        "title": "جولة الإعداد",
+        "status": "الحالة:",
+        "step": "الخطوة {count}"
       },
       "shortcutsSection": {
         "title": "اختصارات لوحة المفاتيح",
@@ -1142,7 +1214,13 @@
     "pageSme": "فواتيري",
     "pageTransactions": "سجل المعاملات",
     "pageAnalytics": "التحليلات",
-    "synonyms": ["ربط المحفظة", "إنشاء فاتورة", "فصل المحفظة", "اختصارات", "اختصارات لوحة المفاتيح"]
+    "synonyms": [
+      "ربط المحفظة",
+      "إنشاء فاتورة",
+      "فصل المحفظة",
+      "اختصارات",
+      "اختصارات لوحة المفاتيح"
+    ]
   },
   "feedback": {
     "sendFeedback": "إرسال ملاحظات",

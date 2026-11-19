@@ -822,10 +822,10 @@ export default function CreateInvoicePage() {
                       type="button"
                       onClick={() => {
                         const val = (document.querySelector('input[name="debtorAddress"]') as HTMLInputElement)?.value;
-                        if (!val) return alert("No address to save");
-                        if (!isValidStellarAddress(val)) return alert("Invalid Stellar address format");
+                        if (!val) return alert(t("fields.addressBook.noAddress"));
+                        if (!isValidStellarAddress(val)) return alert(t("fields.addressBook.invalidAddress"));
                         useWalletStore.getState().addAddressBookEntry(val, "");
-                        alert("Saved to address book");
+                        alert(t("fields.addressBook.saved"));
                       }}
                       className="rounded-lg px-3 py-1 text-sm"
                     >
@@ -1110,7 +1110,7 @@ export default function CreateInvoicePage() {
                     <div className="flex flex-col justify-between rounded-lg border border-zinc-800/40 bg-zinc-900/60 p-3.5 transition-colors hover:border-zinc-800">
                       <div>
                         <span className="mb-1 block text-xs text-zinc-500">
-                          Net Finance Cost (Yield)
+                          {t("financingPreview.netFinanceCost")}
                         </span>
                         <span className="text-base font-semibold text-emerald-400">
                           +$
@@ -1128,9 +1128,9 @@ export default function CreateInvoicePage() {
                     <div className="bg-kora-500/5 border-kora-500/20 hover:border-kora-500/30 group relative flex flex-col justify-between overflow-hidden rounded-lg border p-3.5 transition-colors">
                       <div className="bg-kora-500/10 pointer-events-none absolute right-0 top-0 h-16 w-16 rounded-full blur-xl transition-transform duration-500 group-hover:scale-150" />
                       <div>
-                        <span className="text-kora-300 mb-1 block text-xs">Effective APR</span>
+                        <span className="text-kora-300 mb-1 block text-xs">{t("financingPreview.effectiveApr")}</span>
                         <span className="text-kora-400 bg-clip-text text-xl font-extrabold">
-                          {effectiveAPR > 0 ? `${effectiveAPR.toFixed(2)}%` : "N/A"}
+                          {effectiveAPR > 0 ? `${effectiveAPR.toFixed(2)}%` : t("notAvailable")}
                         </span>
                       </div>
                     </div>
@@ -1161,13 +1161,13 @@ export default function CreateInvoicePage() {
                 >
                   <WifiOff className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold">IPFS storage is temporarily unavailable.</p>
+                    <p className="font-semibold">{t("upload.ipfsUnavailable.title")}</p>
                     <p className="mt-0.5 text-xs text-amber-400/80">
-                      Your invoice cannot be minted right now. All your form data has been saved — you can try again when the service recovers.
+                      {t("upload.ipfsUnavailable.description")}
                     </p>
                     {pinataRetryCount > 0 && (
                       <p className="mt-1 text-[11px] text-amber-400/70" aria-live="polite">
-                        Automatically re-checking… (attempt {pinataRetryCount})
+                        {t("upload.ipfsUnavailable.retrying", { count: pinataRetryCount })}
                       </p>
                     )}
                   </div>
@@ -1175,7 +1175,7 @@ export default function CreateInvoicePage() {
                     type="button"
                     onClick={recheckPinata}
                     className="shrink-0 rounded-lg p-1 text-amber-400 transition-colors hover:bg-amber-500/20"
-                    aria-label="Retry health check"
+                    aria-label={t("upload.ipfsUnavailable.retryAriaLabel")}
                   >
                     <RefreshCw className="h-3.5 w-3.5" />
                   </button>
@@ -1185,22 +1185,22 @@ export default function CreateInvoicePage() {
               {pinataChecking && (
                 <div className="flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3 text-xs text-zinc-400" aria-live="polite">
                   <span className="h-1.5 w-1.5 animate-ping rounded-full bg-zinc-400" aria-hidden="true" />
-                  Checking IPFS storage availability…
+                  {t("upload.ipfsUnavailable.checking")}
                 </div>
               )}
 
               <GlassCard className="space-y-4 p-6">
                 <div>
-                  <p className="mb-2 text-sm font-medium text-zinc-300">Invoice Document</p>
-                  
+                  <p className="mb-2 text-sm font-medium text-zinc-300">{t("upload.document")}</p>
+
                   {isUploading ? (
                     <div className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-8 text-center space-y-4">
                       <div className="flex items-center justify-between text-xs text-zinc-400 px-1">
                         <span className="flex items-center gap-1.5 font-medium text-kora-400">
                           <span className="h-1.5 w-1.5 animate-ping rounded-full bg-kora-500" />
                           {uploadStage === "ipfs"
-                            ? "Uploading invoice to IPFS…"
-                            : "Building on-chain transaction…"}
+                            ? t("upload.progress.uploading")
+                            : t("upload.progress.building")}
                         </span>
                         <span className="font-mono font-semibold text-zinc-300">{uploadProgress}%</span>
                       </div>
@@ -1238,13 +1238,13 @@ export default function CreateInvoicePage() {
                       </div>
                       <p className="text-xs text-zinc-500 leading-normal">
                         {uploadStage === "ipfs"
-                          ? "Pinning your invoice document to IPFS. This anchors the document hash on-chain."
-                          : "Building and simulating the Soroban mint transaction."}
+                          ? t("upload.progress.pinDescription")
+                          : t("upload.progress.chainDescription")}
                       </p>
                     </div>
                   ) : (
                     <FileInput
-                      label="Invoice Document"
+                      label={t("upload.document")}
                       value={file}
                       onChange={(e) => {
                         setFile(e.target.files?.[0] ?? null);
@@ -1268,20 +1268,20 @@ export default function CreateInvoicePage() {
                       <span className="font-medium text-zinc-200">{watch("invoiceNumber")}</span>
                     </div>
                     <div>
-                      <span className="block text-xs text-zinc-500">Debtor Company</span>
+                      <span className="block text-xs text-zinc-500">{t("fields.debtorName")}</span>
                       <span className="font-medium text-zinc-200">{watch("debtorName")}</span>
                     </div>
                   </div>
 
                   <div className="border-zinc-850 grid grid-cols-2 gap-x-4 gap-y-2.5 border-b pb-3 text-zinc-400">
                     <div>
-                      <span className="block text-xs text-zinc-500">Invoice Amount</span>
+                      <span className="block text-xs text-zinc-500">{t("fields.invoiceAmount")}</span>
                       <span className="font-semibold text-zinc-200">
                         ${amountVal.toLocaleString()} {watch("currency")}
                       </span>
                     </div>
                     <div>
-                      <span className="block text-xs text-zinc-500">Financing Capital</span>
+                      <span className="block text-xs text-zinc-500">{t("review.financingCapital")}</span>
                       <span className="text-kora-400 font-semibold">
                         ${financingAmount.toLocaleString()} {watch("currency")}
                       </span>
@@ -1290,11 +1290,11 @@ export default function CreateInvoicePage() {
 
                   <div className="border-zinc-850 grid grid-cols-2 gap-x-4 gap-y-2.5 border-b pb-3 text-zinc-400">
                     <div>
-                      <span className="block text-xs text-zinc-500">Discount Rate</span>
+                      <span className="block text-xs text-zinc-500">{t("fields.discountRate")}</span>
                       <span className="font-semibold text-emerald-400">{discountRateVal}%</span>
                     </div>
                     <div>
-                      <span className="block text-xs text-zinc-500">Minimum Investment</span>
+                      <span className="block text-xs text-zinc-500">{t("fields.minInvestment")}</span>
                       <span className="font-medium text-zinc-200">
                         ${minInvestmentVal.toLocaleString()} {watch("currency")}
                       </span>
@@ -1305,13 +1305,13 @@ export default function CreateInvoicePage() {
                     <div>
                       <span className="block text-xs text-zinc-500">{t("fields.listingExpiry")}</span>
                       <span className="font-medium text-zinc-200">
-                        {watch("listingExpiryDate") || "N/A"}
+                        {watch("listingExpiryDate") || t("notAvailable")}
                       </span>
                     </div>
                     <div>
-                      <span className="block text-xs text-zinc-500">Effective APR</span>
+                      <span className="block text-xs text-zinc-500">{t("financingPreview.effectiveApr")}</span>
                       <span className="text-kora-400 font-semibold">
-                        {effectiveAPR > 0 ? `${effectiveAPR.toFixed(2)}%` : "N/A"}
+                        {effectiveAPR > 0 ? `${effectiveAPR.toFixed(2)}%` : t("notAvailable")}
                       </span>
                     </div>
                   </div>
@@ -1368,7 +1368,7 @@ export default function CreateInvoicePage() {
             </h3>
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">
               {txStatus === "signing"
-                ? "Please open your Stellar browser wallet extension and sign the transaction to authorize minting the invoice NFT on-chain."
+                ? t("transaction.signingDescription")
                 : "Broadcasting your transaction to the Stellar network. Waiting for ledger consensus..."}
             </p>
           </motion.div>
@@ -1385,7 +1385,7 @@ export default function CreateInvoicePage() {
             <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-destructive/10 text-destructive">
               <AlertCircle className="h-10 w-10" />
             </div>
-            <h3 className="text-xl font-bold text-zinc-100">Minting Failed</h3>
+            <h3 className="text-xl font-bold text-zinc-100">{t("transaction.failedTitle")}</h3>
             <p className="mt-3 text-sm leading-relaxed text-zinc-400">
               {txError || "Something went wrong while minting your invoice. Please try again."}
             </p>
@@ -1404,7 +1404,7 @@ export default function CreateInvoicePage() {
                   handleSubmit(onSubmit)();
                 }}
               >
-                Retry Mint
+                {t("transaction.retry")}
               </Button>
             </div>
           </motion.div>

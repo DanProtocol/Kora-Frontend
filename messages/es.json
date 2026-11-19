@@ -78,6 +78,32 @@
     "mobileApp": "Aplicación móvil",
     "openInApp": "Abrir en la aplicación",
     "deepLinkWaiting": "Esperando a que se abra la aplicación de billetera…",
+    "networkMismatch": "Conectado a {current}, pero la aplicación requiere {expected}{passphrase}. Cambia la red de tu billetera para continuar.",
+    "passphraseMismatch": " (incompatibilidad de frase de contraseña)",
+    "watchOnly": "Solo Lectura",
+    "exitWatchMode": "Salir del Modo de Solo Lectura",
+    "switchAccount": "Cambiar Cuenta",
+    "accountSettings": {
+      "title": "Configuración de Cuenta",
+      "description": "Configura las notificaciones y verifica tus límites de identidad.",
+      "notifications": "Notificaciones",
+      "identityVerification": "Verificación de Identidad (KYC)"
+    },
+    "kyc": {
+      "status": "Estado de KYC",
+      "verified": "Verificada",
+      "pending": "Revisión Pendiente",
+      "rejected": "Rechazada",
+      "unverified": "Sin Verificar",
+      "unlimited": "Ilimitado",
+      "limit": "Límite: $10.000",
+      "noneDescription": "Verifica tu identidad para aumentar tu capacidad de financiamiento por encima de $10.000 USDC y desbloquear operaciones secundarias.",
+      "pendingDescription": "Tus documentos se enviaron a Synaps y están en revisión. El proceso suele completarse en 5 minutos.",
+      "rejectedDescription": "Tu solicitud de verificación fue rechazada. Vuelve a enviar tus documentos.",
+      "verifiedDescription": "¡Tu identidad está completamente verificada! Tienes acceso a límites de financiamiento ilimitados y mercados secundarios globales.",
+      "resubmit": "Volver a Enviar Documentos",
+      "verify": "Verificar con Synaps"
+    },
     "trustline": {
       "eurc": {
         "cta": "Agregar línea de confianza EURC",
@@ -168,6 +194,8 @@
     "showing": "Mostrando {count} facturas listadas",
     "shareFilters": "Compartir Filtros",
     "shareFiltersCopied": "Enlace de filtro copiado al portapapeles",
+    "exportCsv": "Exportar CSV",
+    "exportCsvAria": "Exportar los resultados activos del mercado a CSV",
     "searchPlaceholder": "Buscar por deudor, número de factura o jurisdicción…",
     "clearSearch": "Limpiar búsqueda",
     "filters": "Filtros",
@@ -202,6 +230,7 @@
     "recent": "Reciente",
     "clear": "Limpiar",
     "sort": {
+      "ariaLabel": "Ordenar facturas",
       "aprDesc": "APR: Mayor a Menor",
       "aprAsc": "APR: Menor a Mayor",
       "amountDesc": "Monto: Mayor a Menor",
@@ -265,6 +294,7 @@
       "marketplaceSource": "Marketplace"
     },
     "comparison": {
+      "selectionHint": "Selección de comparación: {count} seleccionadas. Usa las flechas para moverte, espacio para alternar y Shift más flechas para seleccionar un rango.",
       "barAriaLabel": "Barra de comparación de facturas",
       "compare": "Comparar",
       "loading": "Cargando {id}…",
@@ -376,6 +406,11 @@
       "review": "Subir y Revisar"
     },
     "fields": {
+      "addressBook": {
+        "noAddress": "No hay una dirección para guardar",
+        "invalidAddress": "Formato de dirección Stellar inválido",
+        "saved": "Guardada en la libreta de direcciones"
+      },
       "invoiceNumber": "Número de Factura",
       "invoiceNumberPlaceholder": "FAC-2024-0001",
       "debtorName": "Nombre de la Empresa Deudora",
@@ -419,9 +454,28 @@
       "youReceive": "Monto de Financiamiento (Recibes)",
       "investorPayout": "Pago al Inversor al Vencimiento",
       "capitalSeek": "Capital Buscado ({percent}%)",
-      "yieldCost": "Costo de Rendimiento ({percent}%)"
+      "yieldCost": "Costo de Rendimiento ({percent}%)",
+      "netFinanceCost": "Costo Financiero Neto (Rendimiento)",
+      "effectiveApr": "APR Efectivo"
     },
+    "notAvailable": "N/D",
     "upload": {
+      "document": "Documento de Factura",
+      "progress": {
+        "uploading": "Subiendo factura a IPFS…",
+        "building": "Construyendo transacción en cadena…",
+        "ipfsPin": "Anclaje IPFS",
+        "onChainMint": "Acuñación en cadena",
+        "pinDescription": "Anclando tu documento de factura en IPFS. Esto fija el hash del documento en la cadena.",
+        "chainDescription": "Construyendo y simulando la transacción de acuñación de Soroban."
+      },
+      "ipfsUnavailable": {
+        "title": "El almacenamiento IPFS no está disponible temporalmente.",
+        "description": "Tu factura no puede acuñarse ahora. Todos los datos del formulario se guardaron; puedes intentarlo cuando el servicio se recupere.",
+        "retrying": "Comprobando de nuevo automáticamente… (intento {count})",
+        "retryAriaLabel": "Reintentar comprobación de estado",
+        "checking": "Comprobando disponibilidad del almacenamiento IPFS…"
+      },
       "dragDrop": "Arrastra y suelta tu PDF de factura aquí",
       "orClick": "o haz clic para explorar",
       "maxSize": "Solo PDF · Máx 10MB",
@@ -439,6 +493,8 @@
       }
     },
     "review": {
+      "summary": "Resumen",
+      "financingCapital": "Capital de Financiamiento",
       "title": "Revisar y Acuñar",
       "subtitle": "Confirma los detalles de tu factura antes de acuñar en Soroban",
       "mintButton": "Acuñar NFT de Factura",
@@ -469,26 +525,40 @@
       "anonymized": "Anonimizado (Industria + País)"
     },
     "discountRateDesc": "El descuento ofrecido a los inversores. Una tasa más alta atrae financiamiento más rápido pero aumenta el costo de financiamiento.",
+    "transaction": {
+      "signingTitle": "Firma Requerida",
+      "submittingTitle": "Enviando Transacción",
+      "signingDescription": "Abre la extensión de tu billetera Stellar y firma la transacción para autorizar la acuñación del NFT de factura en la cadena.",
+      "submittingDescription": "Transmitiendo tu transacción a la red Stellar. Esperando el consenso del libro mayor…",
+      "failedTitle": "Acuñación Fallida",
+      "failedDescription": "Algo salió mal al acuñar tu factura. Inténtalo de nuevo.",
+      "retry": "Reintentar Acuñación"
+    },
     "kybGate": {
-      "title": "Business Verification Required",
-      "subtitleNone": "To mint an invoice on Kora, your SME account must complete KYB verification. The process takes about 2 minutes.",
-      "subtitlePending": "Your verification documents are under review. We'll automatically continue once approved — this page will refresh for you.",
-      "subtitleRejected": "Your previous verification attempt was unsuccessful. Please re-submit with a clear, uncropped document.",
-      "ctaNone": "Start Verification",
-      "ctaRejected": "Re-verify Business",
-      "ctaPending": "Checking verification status…",
-      "backToWizard": "Go Back",
-      "whatYouNeed": "What you will need:",
-      "needIdDoc": "Government-issued ID or business registration document",
-      "needProofAddress": "Proof of business address",
-      "needTime": "Takes approximately 2 minutes",
-      "complianceNote": "Verification is powered by Synaps and required under global AML/KYB compliance standards."
+      "title": "Verificación Comercial Requerida",
+      "subtitleNone": "Para acuñar una factura en Kora, tu cuenta de PYME debe completar la verificación KYB. El proceso tarda unos 2 minutos.",
+      "subtitlePending": "Tus documentos de verificación están en revisión. Continuaremos automáticamente cuando se aprueben; esta página se actualizará.",
+      "subtitleRejected": "Tu intento de verificación anterior no tuvo éxito. Vuelve a enviarlo con un documento claro y sin recortar.",
+      "ctaNone": "Iniciar Verificación",
+      "ctaRejected": "Verificar Empresa de Nuevo",
+      "ctaPending": "Comprobando estado de verificación…",
+      "backToWizard": "Volver al Asistente",
+      "whatYouNeed": "Necesitarás:",
+      "needIdDoc": "Identificación oficial o documento de registro comercial",
+      "needProofAddress": "Comprobante de domicilio comercial",
+      "needTime": "Tarda aproximadamente 2 minutos",
+      "complianceNote": "La verificación funciona con Synaps y es obligatoria según los estándares globales de cumplimiento AML/KYB."
     },
     "draftRecovery": {
       "title": "Tienes un borrador de factura sin terminar",
       "description": "Encontramos un borrador guardado de tu sesión anterior. ¿Quieres continuar donde lo dejaste?",
       "resume": "Continuar Borrador",
       "discard": "Descartar"
+    },
+    "errors": {
+      "partialIpfsCleanup": "La creación de la factura falló. Los archivos ya subidos a IPFS fueron eliminados.",
+      "partialIpfsCleanupFailed": "La creación de la factura falló. Algunos archivos subidos no pudieron eliminarse; caducarán automáticamente.",
+      "mintFailed": "No se pudo preparar la factura para firmarla. Inténtalo de nuevo."
     }
   },
   "smeDashboard": {
@@ -1086,7 +1156,9 @@
       "resetDefaults": "Restablecer valores predeterminados",
       "toggleAriaLabel": "Activar/desactivar {label}",
       "tourSection": {
-        "title": "Recorrido de Incorporación"
+        "title": "Recorrido de Incorporación",
+        "status": "Estado:",
+        "step": "Paso {count}"
       },
       "shortcutsSection": {
         "title": "Atajos de Teclado",
