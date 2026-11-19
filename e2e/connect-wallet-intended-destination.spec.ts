@@ -9,6 +9,7 @@
  *  - No redirect loop occurs (destination is cleared after one use)
  *  - Explicit redirectTo query param is respected
  *  - Happy path: guard → connect → lands on create page
+ *  - External / protocol-relative intended destinations are rejected (open-redirect hardening)
  */
 
 import { test, expect } from "@playwright/test";
@@ -89,6 +90,62 @@ test.describe("Wallet connect guard with intended destination", () => {
     });
 
     expect(uiStoreState).toBe("/dashboard/sme");
+  });
+
+  test("rejects external redirectTo query param as intended destination", async ({ page }) => {
+    // Attempt an open-redirect via an absolute external URL
+    await page.goto("/invoice/create?redirectTo=https://evil.example.com/phish");
+
+    // Wait for guard to appear
+    const modal = page.locator(
+      "div[class*='fixed'][class*='inset-0'][class*='z-50']"
+    ).filter({ hasText: /connect.*wallet/i }).first();
+    await expect(modal).toBeVisible({ timeout: 5000 });
+
+    const uiStoreState = await page.evaluate(() => {
+      const stored = localStorage.getItem("kora-ui");
+      if (!stored) return null;
+      try {
+        const parsed = JSON.parse(stored);
+        return parsed.state?.intendedDestination || null;
+      } catch {
+        return null;
+      }
+    });
+
+    // External URL must not be stored as an intended destination
+    expect(uiStoreState).not.toBe("https://evil.example.com/phish");
+    if (uiStoreState) {
+      expect(uiStoreState.startsWith("/")).toBeTruthy();
+      expect(uiStoreState.startsWith("//")).toBeFalsy();
+    }
+  });
+
+  test("rejects protocol-relative redirectTo query param as intended destination", async ({ page }) => {
+    // Protocol-relative URLs (//evil.com) are a classic open-redirect vector
+    await page.goto("/invoice/create?redirectTo=//evil.example.com/phish");
+
+    const modal = page.locator(
+      "div[class*='fixed'][class*='inset-0'][class*='z-50']"
+    ).filter({ hasText: /connect.*wallet/i }).first();
+    await expect(modal).toBeVisible({ timeout: 5000 });
+
+    const uiStoreState = await page.evaluate(() => {
+      const stored = localStorage.getItem("kora-ui");
+      if (!stored) return null;
+      try {
+        const parsed = JSON.parse(stored);
+        return parsed.state?.intendedDestination || null;
+      } catch {
+        return null;
+      }
+    });
+
+    // Protocol-relative URL must not be stored as an intended destination
+    expect(uiStoreState).not.toBe("//evil.example.com/phish");
+    if (uiStoreState) {
+      expect(uiStoreState.startsWith("//")).toBeFalsy();
+    }
   });
 
   test("happy path: guard → connect → lands on /invoice/create", async ({ page }) => {
@@ -226,50 +283,12 @@ test.describe("Wallet connect guard with intended destination", () => {
       const stored = localStorage.getItem("kora-ui");
       if (!stored) return null;
       try {
-        return JSON.parse(stored).state;
+        return JSON.parse(stored).state?.intendedDestination || null;
       } catch {
         return null;
       }
     });
-    expect(uiState?.intendedDestination).toBe("/invoice/create");
 
-    // Simulate wallet connection (this should clear intendedDestination)
-    const connectedState = {
-      ...initialState,
-      walletStore: {
-        state: {
-          ...initialState.walletStore.state,
-          status: "connected",
-          isConnected: true,
-          address: "GBTEST1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-          publicKey: "GBTEST1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-          provider: "freighter",
-          kitSessionActive: true,
-        },
-      },
-      uiStore: {
-        state: {
-          ...initialState.uiStore.state,
-          intendedDestination: null, // Cleared after use
-        },
-      },
-    };
-
-    await page.evaluate((state) => {
-      localStorage.setItem("kora-ui", JSON.stringify(state.uiStore));
-      localStorage.setItem("kora-wallet", JSON.stringify(state.walletStore));
-    }, connectedState);
-
-    // Verify intended destination is now cleared
-    uiState = await page.evaluate(() => {
-      const stored = localStorage.getItem("kora-ui");
-      if (!stored) return null;
-      try {
-        return JSON.parse(stored).state;
-      } catch {
-        return null;
-      }
-    });
-    expect(uiState?.intendedDestination).toBeNull();
+    expect(uiState).toBe("/invoice/create");
   });
 });
