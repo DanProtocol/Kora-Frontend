@@ -37,6 +37,17 @@ import {
   sanitizeWalletDiagnosticsExport,
   type WalletDiagnosticsExport,
 } from "@/lib/security";
+import {
+  WalletSigningError,
+  classifySigningError,
+} from "@/lib/walletSigningError";
+
+/**
+ * Signing-error classification (#1121) is defined in `lib/walletSigningError`
+ * so it stays importable without pulling the wallet kit in, and re-exported
+ * here because this is the module that produces those errors.
+ */
+export { WalletSigningError, classifySigningError };
 
 /** Default testnet USDC mint amount in stroops (7 decimals): 10,000 USDC. */
 export const TESTNET_USDC_MINT_AMOUNT = BigInt("100000000000");
@@ -552,12 +563,24 @@ export function useWallet() {
       }
 
       const walletKit = getKit();
-      const { result } = await walletKit.signTx({
-        xdr,
-        publicKeys: [address!],
-        network: WALLET_NETWORK,
-      });
-      return result;
+      try {
+        const { result } = await walletKit.signTx({
+          xdr,
+          publicKeys: [address!],
+          network: WALLET_NETWORK,
+        });
+        return result;
+      } catch (err) {
+        if (err instanceof WalletSigningError) throw err;
+        // Providers reject with free-form strings; classify so callers can tell
+        // "the user closed the popup" (recoverable) from "the user said no"
+        // (#1121). The original message is preserved for the toast.
+        throw new WalletSigningError(
+          classifySigningError(err),
+          err instanceof Error ? err.message : String(err),
+          { cause: err }
+        );
+      }
     },
     [isConnected, address, provider, setKitSessionActive, updateActivity],
   );

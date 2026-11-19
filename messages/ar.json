@@ -59,6 +59,8 @@
     "polling": "في انتظار التأكيد…",
     "confirmed": "تم تأكيد المعاملة!",
     "failed": "فشلت المعاملة",
+    "signatureInterrupted": "تم مقاطعة توقيع المحفظة",
+    "signatureInterruptedHint": "لم يتم توقيع أو إرسال أي شيء. أعد المحاولة لتوقيع نفس المعاملة مرة أخرى.",
     "retry": "إعادة المحاولة",
     "dismiss": "تجاهل",
     "cancelSigningSafely": "إلغاء التوقيع بأمان",

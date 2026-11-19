@@ -59,6 +59,8 @@
     "polling": "Waiting for confirmation…",
     "confirmed": "Transaction confirmed!",
     "failed": "Transaction failed",
+    "signatureInterrupted": "Wallet signature interrupted",
+    "signatureInterruptedHint": "Nothing was signed or submitted. Retry to sign the same transaction again.",
     "retry": "Retry",
     "dismiss": "Dismiss",
     "cancelSigningSafely": "Cancel signing safely",

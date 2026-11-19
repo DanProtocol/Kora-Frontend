@@ -59,6 +59,8 @@
     "polling": "Esperando confirmación…",
     "confirmed": "¡Transacción confirmada!",
     "failed": "Transacción fallida",
+    "signatureInterrupted": "Firma de la billetera interrumpida",
+    "signatureInterruptedHint": "No se firmó ni se envió nada. Reintenta para firmar la misma transacción de nuevo.",
     "retry": "Reintentar",
     "dismiss": "Descartar",
     "cancelSigningSafely": "Cancelar la firma de forma segura",

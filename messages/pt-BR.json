@@ -59,6 +59,8 @@
     "polling": "Aguardando confirmação…",
     "confirmed": "Transação confirmada!",
     "failed": "Transação falhou",
+    "signatureInterrupted": "Assinatura da carteira interrompida",
+    "signatureInterruptedHint": "Nada foi assinado nem enviado. Tente novamente para assinar a mesma transação.",
     "retry": "Tentar novamente",
     "dismiss": "Fechar",
     "cancelSigningSafely": "Cancelar assinatura com segurança",
