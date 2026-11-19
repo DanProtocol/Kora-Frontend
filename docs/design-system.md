@@ -179,7 +179,7 @@ Screen readers rely on semantic landmarks to navigate page regions efficiently. 
 
 ### Skip Links
 
-Currently not implemented. Consider adding a visually-hidden "Skip to main content" link at the start of `<body>` if user feedback indicates keyboard users are navigating through repetitive chrome on every page load.
+The top-level layout places a visually-hidden "Skip to main content" link as the first focusable element in `<body>`. It targets the `main#main-content` landmark and becomes visible on keyboard focus, allowing keyboard users to bypass repeated navigation chrome.
 
 ### Testing Landmarks
 
