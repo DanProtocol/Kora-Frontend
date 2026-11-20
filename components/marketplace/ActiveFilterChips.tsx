@@ -43,14 +43,19 @@ interface ActiveFilterChipsProps {
  */
 export function deriveChips(
   filters: import("@/store/invoiceStore").FilterState,
-  t?: (key: string) => string
+  t?: (key: string, values?: Record<string, string | number>) => string
 ): FilterChip[] {
   const chips: FilterChip[] = [];
+
+  const translateOr = (key: string, fallback: string, values?: Record<string, string | number>) => {
+    const translated = t?.(key, values);
+    return translated && translated !== key ? translated : fallback;
+  };
 
   for (const cat of filters.categories) {
     chips.push({
       key: `category:${cat}`,
-      label: cat.charAt(0).toUpperCase() + cat.slice(1),
+      label: translateOr(`categoryLabels.${cat}`, cat.charAt(0).toUpperCase() + cat.slice(1)),
       filterKey: "categories",
       value: cat,
     });
@@ -59,7 +64,7 @@ export function deriveChips(
   for (const jur of filters.jurisdictions) {
     chips.push({
       key: `jurisdiction:${jur}`,
-      label: jur,
+      label: translateOr(`jurisdictionLabels.${jur}`, jur),
       filterKey: "jurisdictions",
       value: jur,
     });
@@ -68,7 +73,7 @@ export function deriveChips(
   for (const tier of filters.riskTiers) {
     chips.push({
       key: `riskTier:${tier}`,
-      label: `Risk: ${tier}`,
+      label: translateOr("activeFilterRiskTier", `Risk: ${tier}`, { tier }),
       filterKey: "riskTiers",
       value: tier,
     });
@@ -77,7 +82,11 @@ export function deriveChips(
   if (filters.aprRange[0] > 0 || filters.aprRange[1] < 50) {
     chips.push({
       key: "aprRange",
-      label: `APR: ${filters.aprRange[0]}%–${filters.aprRange[1]}%`,
+      label: translateOr(
+        "activeFilterAprRange",
+        `APR: ${filters.aprRange[0]}%–${filters.aprRange[1]}%`,
+        { min: filters.aprRange[0], max: filters.aprRange[1] }
+      ),
       filterKey: "aprRange",
     });
   }
@@ -181,7 +190,7 @@ export default function ActiveFilterChips({
       <div
         className={cn("mt-3 flex flex-wrap items-center gap-2", className)}
         role="group"
-        aria-label="Active filters"
+        aria-label={t ? t("activeFilters") : "Active filters"}
         data-testid="active-filter-chips"
         data-reduced-motion={prefersReducedMotion}
       >
@@ -198,9 +207,14 @@ export default function ActiveFilterChips({
                 aria-label={`Remove filter: ${chip.label}`}
                 onClick={() => {
                   handleRemove(chip);
-                  // Announce to screen readers via the live region
                   const el = document.getElementById(announcerId);
-                  if (el) el.textContent = `Filter "${chip.label}" removed`;
+                  if (el) {
+                    const translated = t?.("filterRemoved", { label: chip.label });
+                    el.textContent =
+                      translated && translated !== "filterRemoved"
+                        ? translated
+                        : `Filter "${chip.label}" removed`;
+                  }
                 }}
                 className={cn(
                   "flex h-4 w-4 items-center justify-center rounded-full",

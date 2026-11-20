@@ -186,13 +186,13 @@ export function NotificationSettings() {
         </div>
 
         <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
-          <span>Status:</span>
+          <span>{t("tourSection.status")}</span>
           <span className="font-medium text-foreground">
             {tour.completed
               ? tOnboarding("tourCompleted")
               : tour.skipped
                 ? tOnboarding("tourSkipped")
-                : `Step ${(tour.stepIndex ?? 0) + 1}`}
+                : t("tourSection.step", { count: (tour.stepIndex ?? 0) + 1 })}
           </span>
         </div>
 

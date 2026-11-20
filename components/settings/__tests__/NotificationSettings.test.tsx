@@ -68,6 +68,8 @@ const NOTIFICATIONS_STRINGS: Record<string, string> = {
   // Interpolated: "Toggle {label}" → return key so tests can predict the value
   toggleAriaLabel: "toggleAriaLabel",
   "tourSection.title": "Onboarding Tour",
+  "tourSection.status": "Status:",
+  "tourSection.step": "Step 3",
   "shortcutsSection.title": "Keyboard Shortcuts",
   "shortcutsSection.description": "Enable global keyboard shortcuts for faster navigation.",
   "shortcutsSection.enableLabel": "Enable shortcuts",

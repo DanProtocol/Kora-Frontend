@@ -78,6 +78,32 @@
     "mobileApp": "Mobile app",
     "openInApp": "Open in app",
     "deepLinkWaiting": "Waiting for wallet app to open…",
+    "networkMismatch": "Connected to {current} but app requires {expected}{passphrase}. Switch your wallet network to continue.",
+    "passphraseMismatch": " (passphrase mismatch)",
+    "watchOnly": "Watch Only",
+    "exitWatchMode": "Exit Watch Mode",
+    "switchAccount": "Switch Account",
+    "accountSettings": {
+      "title": "Account Settings",
+      "description": "Configure notifications and verify your identity limits.",
+      "notifications": "Notifications",
+      "identityVerification": "Identity Verification (KYC)"
+    },
+    "kyc": {
+      "status": "KYC Status",
+      "verified": "Verified",
+      "pending": "Pending Review",
+      "rejected": "Rejected",
+      "unverified": "Unverified",
+      "unlimited": "Unlimited",
+      "limit": "Limit: $10,000",
+      "noneDescription": "Verify your identity to increase your funding capacity above $10,000 USDC and unlock secondary trade capabilities.",
+      "pendingDescription": "Your documents have been submitted to Synaps and are currently under review. This process usually completes within 5 minutes.",
+      "rejectedDescription": "Your verification request was rejected. Please re-submit your verification documents.",
+      "verifiedDescription": "Your identity is fully verified! You have access to unlimited funding thresholds and global secondary markets.",
+      "resubmit": "Re-submit Documents",
+      "verify": "Verify with Synaps"
+    },
     "trustline": {
       "eurc": {
         "cta": "Add EURC trustline",
@@ -168,6 +194,8 @@
     "showing": "Showing {count} listed invoices",
     "shareFilters": "Share Filters",
     "shareFiltersCopied": "Filter link copied to clipboard",
+    "exportCsv": "Export CSV",
+    "exportCsvAria": "Export active marketplace results to CSV",
     "searchPlaceholder": "Search by debtor, invoice number, or jurisdiction…",
     "clearSearch": "Clear search",
     "filters": "Filters",
@@ -177,6 +205,10 @@
     "active": "{count} active",
     "resetFilters": "Reset All Filters",
     "activeOnly": "Active Only",
+    "activeFilters": "Active filters",
+    "filterRemoved": "Filter \"{label}\" removed",
+    "activeFilterRiskTier": "Risk: {tier}",
+    "activeFilterAprRange": "APR: {min}%–{max}%",
     "activeOnlyDesc": "Hide fully funded or defaulted invoices",
     "showExpired": "Show Expired",
     "showExpiredDesc": "Include listings whose expiry date has passed",
@@ -195,6 +227,7 @@
     "recent": "Recent",
     "clear": "Clear",
     "sort": {
+      "ariaLabel": "Sort invoices",
       "aprDesc": "APR: High to Low",
       "aprAsc": "APR: Low to High",
       "amountDesc": "Amount: High to Low",
@@ -204,6 +237,7 @@
       "newest": "Newest Listed"
     },
     "comparison": {
+      "selectionHint": "Comparison selection: {count} selected. Use arrow keys to move, space to toggle, and Shift plus arrows to select a range.",
       "barAriaLabel": "Invoice comparison bar",
       "compare": "Compare",
       "loading": "Loading {id}…",
@@ -376,6 +410,11 @@
       "review": "Upload & Review"
     },
     "fields": {
+      "addressBook": {
+        "noAddress": "No address to save",
+        "invalidAddress": "Invalid Stellar address format",
+        "saved": "Saved to address book"
+      },
       "invoiceNumber": "Invoice Number",
       "invoiceNumberPlaceholder": "INV-2024-0001",
       "debtorName": "Debtor Company Name",
@@ -419,9 +458,28 @@
       "youReceive": "Financing Amount (You Receive)",
       "investorPayout": "Investor Payout at Maturity",
       "capitalSeek": "Capital Seek ({percent}%)",
-      "yieldCost": "Yield Cost ({percent}%)"
+      "yieldCost": "Yield Cost ({percent}%)",
+      "netFinanceCost": "Net Finance Cost (Yield)",
+      "effectiveApr": "Effective APR"
     },
+    "notAvailable": "N/A",
     "upload": {
+      "document": "Invoice Document",
+      "progress": {
+        "uploading": "Uploading invoice to IPFS…",
+        "building": "Building on-chain transaction…",
+        "ipfsPin": "IPFS Pin",
+        "onChainMint": "On-chain Mint",
+        "pinDescription": "Pinning your invoice document to IPFS. This anchors the document hash on-chain.",
+        "chainDescription": "Building and simulating the Soroban mint transaction."
+      },
+      "ipfsUnavailable": {
+        "title": "IPFS storage is temporarily unavailable.",
+        "description": "Your invoice cannot be minted right now. All your form data has been saved — you can try again when the service recovers.",
+        "retrying": "Automatically re-checking… (attempt {count})",
+        "retryAriaLabel": "Retry health check",
+        "checking": "Checking IPFS storage availability…"
+      },
       "dragDrop": "Drag & drop your invoice PDF here",
       "orClick": "or click to browse",
       "maxSize": "PDF only · Max 10MB",
@@ -439,6 +497,8 @@
       }
     },
     "review": {
+      "summary": "Summary",
+      "financingCapital": "Financing Capital",
       "title": "Review & Mint",
       "subtitle": "Confirm your invoice details before minting on Soroban",
       "mintButton": "Mint Invoice NFT",
@@ -494,6 +554,15 @@
       "partialIpfsCleanup": "Invoice creation failed. Any files already uploaded to IPFS have been removed.",
       "partialIpfsCleanupFailed": "Invoice creation failed. Some uploaded files could not be removed — they will expire automatically.",
       "mintFailed": "Failed to prepare the invoice for signing. Please try again."
+    },
+    "transaction": {
+      "signingTitle": "Signature Required",
+      "submittingTitle": "Submitting Transaction",
+      "signingDescription": "Please open your Stellar browser wallet extension and sign the transaction to authorize minting the invoice NFT on-chain.",
+      "submittingDescription": "Broadcasting your transaction to the Stellar network. Waiting for ledger consensus...",
+      "failedTitle": "Minting Failed",
+      "failedDescription": "Something went wrong while minting your invoice. Please try again.",
+      "retry": "Retry Mint"
     }
   },
   "smeDashboard": {
@@ -1091,7 +1160,9 @@
       "resetDefaults": "Reset to defaults",
       "toggleAriaLabel": "Toggle {label}",
       "tourSection": {
-        "title": "Onboarding Tour"
+        "title": "Onboarding Tour",
+        "status": "Status:",
+        "step": "Step {count}"
       },
       "shortcutsSection": {
         "title": "Keyboard Shortcuts",
@@ -1460,6 +1531,7 @@
     "sellerAddress": "Seller Address",
     "acquirePosition": "Acquire Position",
     "connectWalletToAcquire": "Connect Wallet to Acquire",
+    "connectWalletDescription": "Please connect your wallet first.",
     "acceptTransfer": "Accept Transfer",
     "listingAria": "Secondary listing for {invoiceNumber}",
     "listingAriaStale": "Secondary listing for {invoiceNumber} — stale, position transferred",

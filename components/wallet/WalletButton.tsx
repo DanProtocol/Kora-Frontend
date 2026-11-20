@@ -283,7 +283,7 @@ export function WalletButton() {
                 {isWatchMode && (
                   <span className="flex items-center gap-1 rounded bg-blue-500/10 px-1.5 py-0.5 text-xs text-blue-500">
                     <Eye className="h-3 w-3" />
-                    Watch Only
+                    {t("watchOnly")}
                   </span>
                 )}
               </div>
@@ -327,7 +327,7 @@ export function WalletButton() {
                 }}
                 className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-destructive hover:bg-destructive/10"
               >
-                <LogOut className="h-3.5 w-3.5" /> Exit Watch Mode
+                <LogOut className="h-3.5 w-3.5" /> {t("exitWatchMode")}
               </button>
             ) : (
               <>
@@ -397,7 +397,7 @@ export function WalletButton() {
                   className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
                   data-testid="switch-account-button"
                 >
-                  <UserCheck className="h-3.5 w-3.5" /> Switch Account
+                  <UserCheck className="h-3.5 w-3.5" /> {t("switchAccount")}
                 </button>
               </>
             )}
@@ -416,9 +416,9 @@ export function WalletButton() {
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DialogContent className="max-w-md bg-zinc-950 border border-zinc-850 text-zinc-100">
           <DialogHeader>
-            <DialogTitle>Account Settings</DialogTitle>
+            <DialogTitle>{t("accountSettings.title")}</DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Configure notifications and verify your identity limits.
+              {t("accountSettings.description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -443,7 +443,7 @@ export function WalletButton() {
                   : "border-transparent text-muted-foreground hover:text-zinc-300"
               )}
             >
-              Identity Verification (KYC)
+              {t("accountSettings.identityVerification")}
             </button>
           </div>
 
@@ -465,7 +465,7 @@ export function WalletButton() {
             <div className="space-y-4 pt-1">
               <div className="flex items-start justify-between gap-4 rounded-lg border border-zinc-800 bg-zinc-900/10 p-3">
                 <div className="space-y-1">
-                  <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">KYC Status</p>
+                  <p className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">{t("kyc.status")}</p>
                   <p className="text-sm font-bold capitalize flex items-center gap-1.5 mt-0.5">
                     {kycStatus === "verified" && (
                       <>
@@ -491,12 +491,12 @@ export function WalletButton() {
                 </div>
                 {kycStatus === "verified" && (
                   <span className="rounded bg-success/15 px-2 py-0.5 text-[10px] font-medium text-success border border-success/10">
-                    Unlimited
+                    {t("kyc.unlimited")}
                   </span>
                 )}
                 {kycStatus === "none" && (
                   <span className="rounded bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground border border-border/50">
-                    Limit: $10,000
+                    {t("kyc.limit")}
                   </span>
                 )}
               </div>
@@ -504,22 +504,22 @@ export function WalletButton() {
               <div className="space-y-2 text-xs text-zinc-400 leading-relaxed">
                 {kycStatus === "none" && (
                   <p>
-                    Verify your identity to increase your funding capacity above $10,000 USDC and unlock secondary trade capabilities.
+                    {t("kyc.noneDescription")}
                   </p>
                 )}
                 {kycStatus === "pending" && (
                   <p>
-                    Your documents have been submitted to Synaps and are currently under review. This process usually completes within 5 minutes.
+                    {t("kyc.pendingDescription")}
                   </p>
                 )}
                 {kycStatus === "rejected" && (
                   <p className="text-destructive font-medium">
-                    Your verification request was rejected. Please re-submit your verification documents.
+                    {t("kyc.rejectedDescription")}
                   </p>
                 )}
                 {kycStatus === "verified" && (
                   <p>
-                    Your identity is fully verified! You have access to unlimited funding thresholds and global secondary markets.
+                    {t("kyc.verifiedDescription")}
                   </p>
                 )}
               </div>
@@ -532,7 +532,7 @@ export function WalletButton() {
                   }}
                   className="w-full text-xs font-semibold"
                 >
-                  {kycStatus === "rejected" ? "Re-submit Documents" : "Verify with Synaps"}
+                  {kycStatus === "rejected" ? t("kyc.resubmit") : t("kyc.verify")}
                 </Button>
               )}
             </div>

@@ -761,18 +761,18 @@ function MarketplaceContent() {
             <StaleDataBadge updatedAt={dataUpdatedAt || null} className="mt-2" />
             {comparisonEnabled && (
               <p className="mt-2 text-xs text-zinc-500" aria-live="polite">
-                Comparison selection: {comparisonList.length} selected. Use arrow keys to move, space to toggle, and Shift plus arrows to select a range.
+                {t("comparison.selectionHint", { count: comparisonList.length })}
               </p>
             )}
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={handleExportCsv}
-              aria-label="Export active marketplace results to CSV"
+              aria-label={t("exportCsvAria")}
               className="flex items-center gap-1.5 rounded-lg border border-zinc-800 bg-zinc-900/40 px-3 py-2 text-sm font-medium text-zinc-300 hover:border-zinc-700 hover:bg-zinc-900 transition-colors"
             >
               <Download className="h-4 w-4 text-emerald-400" />
-              <span>Export CSV</span>
+              <span>{t("exportCsv")}</span>
             </button>
             <button
               onClick={() => {
@@ -788,7 +788,7 @@ function MarketplaceContent() {
           </div>
 
           <Button variant="outline" size="sm" onClick={() => setWatchlistOpen(true)} leftIcon={<Star className="h-4 w-4" />}>
-            Watchlist{watchedCount > 0 ? ` (${watchedCount})` : ""}
+            {t("watchlist.title")}{watchedCount > 0 ? ` (${watchedCount})` : ""}
           </Button>
         </div>
 
@@ -879,7 +879,7 @@ function MarketplaceContent() {
             {/* Sort options select */}
             <div className="relative flex items-center">
               <ArrowUpDown className="absolute left-3 h-4 w-4 text-zinc-400 pointer-events-none" aria-hidden="true" />
-              <label htmlFor="marketplace-sort" className="sr-only">Sort invoices</label>
+              <label htmlFor="marketplace-sort" className="sr-only">{t("sort.ariaLabel")}</label>
               <select
                 id="marketplace-sort"
                 value={sortBy}
@@ -1070,7 +1070,7 @@ function MarketplaceContent() {
                   )}
                   <button
                     onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-                    aria-label="Scroll back to top"
+                    aria-label={t("backToTop")}
                     className="fixed right-4 bottom-12 rounded-full bg-primary px-3 py-2 text-sm text-primary-foreground"
                   >
                     {t("backToTop")}

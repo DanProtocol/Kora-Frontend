@@ -78,7 +78,8 @@ export function CommandPalette() {
   const setWalletModalOpen = useUIStore((s) => s.setWalletModalOpen);
   const [query, setQuery] = React.useState("");
   const { formatCurrency, formatPercentage } = useFormatters();
-  const synonyms = t.raw("synonyms") as string[];
+  const synonyms =
+    typeof t.raw === "function" ? (t.raw("synonyms") as string[]) : [];
 
   const pageCommands = React.useMemo(
     () =>
@@ -278,49 +279,49 @@ export function CommandPalette() {
               {/* Actions */}
               {(showEmpty ||
                 synonyms.some((a) => a.includes(query.toLowerCase()))) && (
-                <Command.Group
-                  heading={
-                    <GroupHeading icon={<Zap className="h-3 w-3" />} label={t("actionsLabel")} />
-                  }
-                >
-                  {!isConnected && (
-                    <PaletteItem
-                      icon={<Wallet className="h-4 w-4" />}
-                      label={t("connectWallet")}
-                      query={query}
-                      testId="action-connect-wallet"
-                      onSelect={() => runAction(() => setWalletModalOpen(true))}
-                    />
-                  )}
-                  <PaletteItem
-                    icon={<PlusCircle className="h-4 w-4" />}
-                    label={t("createInvoice")}
-                    query={query}
-                    testId="action-create-invoice"
-                    onSelect={() => navigate("/invoice/create", t("createInvoice"), "page")}
-                  />
-                  {isConnected && (
-                    <PaletteItem
-                      icon={<LogOut className="h-4 w-4" />}
-                      label={t("disconnectWallet")}
-                      query={query}
-                      testId="action-disconnect-wallet"
-                      onSelect={handleDisconnect}
-                    />
-                  )}
-                  <PaletteItem
-                    icon={<Keyboard className="h-4 w-4" />}
-                    label={t("shortcuts")}
-                    query={query}
-                    testId="action-shortcuts"
-                    onSelect={() =>
-                      runAction(() =>
-                        window.dispatchEvent(new CustomEvent("kora:open-shortcut-modal"))
-                      )
+                  <Command.Group
+                    heading={
+                      <GroupHeading icon={<Zap className="h-3 w-3" />} label={t("actionsLabel")} />
                     }
-                  />
-                </Command.Group>
-              )}
+                  >
+                    {!isConnected && (
+                      <PaletteItem
+                        icon={<Wallet className="h-4 w-4" />}
+                        label={t("connectWallet")}
+                        query={query}
+                        testId="action-connect-wallet"
+                        onSelect={() => runAction(() => setWalletModalOpen(true))}
+                      />
+                    )}
+                    <PaletteItem
+                      icon={<PlusCircle className="h-4 w-4" />}
+                      label={t("createInvoice")}
+                      query={query}
+                      testId="action-create-invoice"
+                      onSelect={() => navigate("/invoice/create", t("createInvoice"), "page")}
+                    />
+                    {isConnected && (
+                      <PaletteItem
+                        icon={<LogOut className="h-4 w-4" />}
+                        label={t("disconnectWallet")}
+                        query={query}
+                        testId="action-disconnect-wallet"
+                        onSelect={handleDisconnect}
+                      />
+                    )}
+                    <PaletteItem
+                      icon={<Keyboard className="h-4 w-4" />}
+                      label={t("shortcuts")}
+                      query={query}
+                      testId="action-shortcuts"
+                      onSelect={() =>
+                        runAction(() =>
+                          window.dispatchEvent(new CustomEvent("kora:open-shortcut-modal"))
+                        )
+                      }
+                    />
+                  </Command.Group>
+                )}
             </Command.List>
 
             {/* Footer hint */}
