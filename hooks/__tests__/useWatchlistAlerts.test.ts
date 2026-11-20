@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { getAlertMessage } from "@/hooks/useWatchlistAlerts";
+import { createAlertGate, getAlertMessage } from "@/hooks/useWatchlistAlerts";
 import type { NotificationPreferences } from "@/store/invoiceStore";
 import type { Invoice } from "@/types";
 
@@ -147,5 +147,47 @@ describe("getAlertMessage", () => {
     const message = getAlertMessage(invoice, { status: "listed", fundingProgress: 0.5, apr: 20 }, ALL_ON);
 
     expect(message).toBeNull();
+  });
+});
+
+describe("createAlertGate (#1141)", () => {
+  it("suppresses the same alert key within the dedupe window", () => {
+    const gate = createAlertGate({ dedupeMs: 60_000, windowMs: 10_000, maxPerWindow: 10 });
+
+    expect(gate.shouldEmit("inv_1:INV-001 is now funded.", 0)).toBe(true);
+    expect(gate.shouldEmit("inv_1:INV-001 is now funded.", 30_000)).toBe(false);
+    expect(gate.shouldEmit("inv_1:INV-001 is now funded.", 60_000)).toBe(true);
+  });
+
+  it("treats different invoices or messages as distinct keys", () => {
+    const gate = createAlertGate({ maxPerWindow: 10 });
+
+    expect(gate.shouldEmit("inv_1:a", 0)).toBe(true);
+    expect(gate.shouldEmit("inv_2:a", 0)).toBe(true);
+    expect(gate.shouldEmit("inv_1:b", 0)).toBe(true);
+  });
+
+  it("throttles bursts to maxPerWindow and recovers once the window slides", () => {
+    const gate = createAlertGate({ dedupeMs: 0, windowMs: 10_000, maxPerWindow: 3 });
+
+    expect([1, 2, 3, 4, 5].map((n) => gate.shouldEmit(`inv_${n}:x`, 1_000))).toEqual([
+      true,
+      true,
+      true,
+      false,
+      false,
+    ]);
+    // Still inside the 10 s window that started at 1_000 ...
+    expect(gate.shouldEmit("inv_6:x", 10_999)).toBe(false);
+    // ... and allowed again once the burst has slid out of it.
+    expect(gate.shouldEmit("inv_6:x", 11_000)).toBe(true);
+  });
+
+  it("does not record throttled alerts as shown", () => {
+    const gate = createAlertGate({ dedupeMs: 60_000, windowMs: 10_000, maxPerWindow: 1 });
+
+    expect(gate.shouldEmit("inv_1:x", 0)).toBe(true);
+    expect(gate.shouldEmit("inv_2:x", 0)).toBe(false); // throttled, not deduped
+    expect(gate.shouldEmit("inv_2:x", 10_000)).toBe(true);
   });
 });
