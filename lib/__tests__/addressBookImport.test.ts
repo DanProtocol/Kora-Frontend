@@ -5,7 +5,15 @@
  * including signature verification and tampering detection.
  */
 
-import { validateAddressBookEntry, importAddressBook, exportAddressBook, type AddressBookEntry } from '../addressBookImport';
+import {
+  validateAddressBookEntry,
+  importAddressBook,
+  exportAddressBook,
+  MAX_IMPORT_CHARS,
+  MAX_IMPORT_ENTRIES,
+  MAX_LABEL_LENGTH,
+  type AddressBookEntry,
+} from '../addressBookImport';
 // eslint-disable-next-line
 const StellarSdk = require("@stellar/stellar-sdk");
 
@@ -331,6 +339,76 @@ describe('Address Book Import Validation', () => {
       expect(result.imported[0].address).toBe(testAddress);
       expect(result.imported[0].label).toBe("First");
       expect(result.imported[0].groupIds).toEqual(["work"]);
+    });
+  });
+  describe('import hardening (#1139)', () => {
+    const fresh = () => StellarSdk.Keypair.random().publicKey();
+
+    it('rejects an address with a corrupted checksum', () => {
+      const last = testAddress.slice(-1);
+      const corrupted = testAddress.slice(0, -1) + (last === 'A' ? 'B' : 'A');
+      expect(validateAddressBookEntry({ address: corrupted })[0]).toContain('Invalid Stellar address');
+    });
+
+    it('rejects padded addresses instead of storing the whitespace', () => {
+      const errors = validateAddressBookEntry({ address: ` ${testAddress} ` });
+      expect(errors).toEqual(['Address must not contain leading or trailing whitespace']);
+
+      const result = importAddressBook(JSON.stringify([{ address: testAddress }, { address: `${testAddress} ` }]));
+      expect(result.imported).toHaveLength(1);
+      expect(result.imported[0].address).toBe(testAddress);
+    });
+
+    it('rejects non-object entries without throwing', () => {
+      const result = importAddressBook(JSON.stringify([null, 42, 'G...', [testAddress], { address: testAddress }]));
+      expect(result.imported).toHaveLength(1);
+      expect(result.rejected).toHaveLength(4);
+      expect(result.rejected.every((r) => r.reason === 'Entry must be an object')).toBe(true);
+    });
+
+    it('rejects a non-string address and over-long labels', () => {
+      expect(validateAddressBookEntry({ address: 123 as unknown as string })).toEqual(['Address must be a string']);
+      expect(validateAddressBookEntry({ address: testAddress, label: 'x'.repeat(MAX_LABEL_LENGTH) })).toEqual([]);
+      expect(validateAddressBookEntry({ address: testAddress, label: 'x'.repeat(MAX_LABEL_LENGTH + 1) })[0]).toContain(
+        `at most ${MAX_LABEL_LENGTH}`
+      );
+    });
+
+    it('rejects a wrapped addressBook that is not an array', () => {
+      const result = importAddressBook(JSON.stringify({ addressBook: 'not-an-array' }));
+      expect(result.success).toBe(false);
+      expect(result.imported).toHaveLength(0);
+      expect(result.warnings[0]).toContain('`addressBook` to be an array');
+    });
+
+    it('rejects addresses already in the address book', () => {
+      const other = fresh();
+      const result = importAddressBook(JSON.stringify([{ address: testAddress }, { address: other }]), {
+        existingAddresses: [testAddress],
+      });
+      expect(result.imported.map((e) => e.address)).toEqual([other]);
+      expect(result.rejected[0].reason).toBe('Address already exists in address book');
+    });
+
+    it('caps the number of processed entries and reports the excess', () => {
+      const entries = [fresh(), fresh(), fresh()].map((address) => ({ address }));
+      const result = importAddressBook(JSON.stringify(entries), { maxEntries: 2 });
+      expect(result.imported).toHaveLength(2);
+      expect(result.rejected).toHaveLength(1);
+      expect(result.rejected[0].reason).toBe('Exceeds import limit of 2 entries');
+      expect(result.warnings.some((w) => w.includes('only the first 2'))).toBe(true);
+    });
+
+    it('applies MAX_IMPORT_ENTRIES by default', () => {
+      const entries = Array.from({ length: MAX_IMPORT_ENTRIES + 1 }, () => ({ address: 'invalid' }));
+      const result = importAddressBook(JSON.stringify(entries));
+      expect(result.rejected.filter((r) => r.reason.startsWith('Exceeds import limit'))).toHaveLength(1);
+    });
+
+    it('refuses oversized input before parsing it', () => {
+      const result = importAddressBook(' '.repeat(MAX_IMPORT_CHARS + 1));
+      expect(result.success).toBe(false);
+      expect(result.warnings[0]).toContain('too large');
     });
   });
 });
