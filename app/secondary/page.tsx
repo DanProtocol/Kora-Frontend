@@ -53,7 +53,6 @@ import {
 } from "@/lib/secondaryUrlFilters";
 import {
   SECONDARY_SORT_OPTIONS,
-  DEFAULT_SECONDARY_SORT,
   parseSecondarySort,
   sortSecondaryItems,
   type SecondarySortBy,
@@ -134,7 +133,9 @@ function SecondaryMarketplaceContent() {
   const [copied, setCopied] = useState(false);
   const [acquireItem, setAcquireItem] = useState<SecondaryMarketItem | null>(null);
   const [acceptItem, setAcceptItem] = useState<SecondaryMarketItem | null>(null);
-  const [sortBy, setSortBy] = useState<SecondarySortBy>(DEFAULT_SECONDARY_SORT);
+  const [sortBy, setSortBy] = useState<SecondarySortBy>(() =>
+    parseSecondarySort(initialFilters.sort)
+  );
 
   // Debounce free-text inputs (seller + search) before committing to the URL.
   const debouncedSearch = useDebounce(searchQuery, 350);
@@ -148,6 +149,7 @@ function SecondaryMarketplaceContent() {
       yield: yieldFilter,
       seller: debouncedSeller,
       highlight: highlightId,
+      sort: sortBy,
     });
     if (isFirstRender.current) {
       isFirstRender.current = false;
@@ -163,6 +165,7 @@ function SecondaryMarketplaceContent() {
     yieldFilter,
     debouncedSeller,
     highlightId,
+    sortBy,
     pathname,
     router,
   ]);
