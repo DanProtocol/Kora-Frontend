@@ -573,3 +573,6 @@ the identical flow above using `buildAddTrustlineTx(address, "eurc")`.
 | User rejects wallet signing | `addUsdcTrustlineOnTestnet` throws; error toast shown via `wallet.trustline.usdc.error` |
 | Network mismatch (wrong chain) | CTA is disabled via `hasNetworkMismatch` guard |
 | Mainnet vs testnet issuer mismatch | Set `NEXT_PUBLIC_USDC_ISSUER` to the correct mainnet issuer |
+
+<!-- handsoff-issue-1117 -->
+- #1117: Dashboard investor and SME role chrome localization
