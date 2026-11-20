@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Store, TrendingUp, DollarSign, BarChart3, Clock, AlertTriangle, Tag } from "lucide-react";
+import { Store, TrendingUp, DollarSign, BarChart3, Clock, AlertTriangle, Tag, Download, FileText } from "lucide-react";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +39,15 @@ import { InvestorDashboardSkeleton } from "@/components/ui/skeleton";
 import { KycStatusCard } from "@/components/dashboard/KycStatusCard";
 import { StaleDataBadge } from "@/components/layout/StaleDataBadge";
 import { SellerAnalyticsDashboard } from "@/components/analytics/SellerAnalyticsDashboard";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
+import EmptyState from "@/components/ui/EmptyState";
+import { exportCsv, exportPdf } from "@/lib/export";
+import {
+  PORTFOLIO_EXPORT_HEADERS,
+  positionsToExportRows,
+  portfolioExportFilename,
+  portfolioPdfFilename,
+} from "@/lib/portfolioExport";
 
 const DataTable = dynamic<DataTableProps<InvestorPosition>>(
   () => import("@/components/ui/data-table").then((m) => m.DataTable),
@@ -169,7 +178,7 @@ export default function InvestorDashboardPage() {
 
     const runClaim = async () => {
       await execute(() => prepareClaimPosition(pos.id, address), {
-        successMessage: "Claim submitted",
+        successMessage: t("claim.successMessage"),
         // Yield claims are the "yield available" notification channel, not the
         // generic tx one — muting that preference must mute this too.
         successNotificationType: "yieldAvailable",
@@ -189,8 +198,8 @@ export default function InvestorDashboardPage() {
     // the tree to raise the modal — surface the reason rather than failing mute.
     if (result.requiresVerification) {
       toast.error(
-        "Verification required",
-        "Verify wallet ownership to claim your yield.",
+        t("claim.verificationRequiredTitle"),
+        t("claim.verificationRequiredDesc"),
         () => {
           void handleClaim(pos);
         }
@@ -199,7 +208,7 @@ export default function InvestorDashboardPage() {
     }
 
     if (result.error && result.error !== "Wallet not connected") {
-      toast.error("Claim failed", result.error, () => {
+      toast.error(t("claim.failedTitle"), result.error, () => {
         void handleClaim(pos);
       });
     }
@@ -243,7 +252,85 @@ export default function InvestorDashboardPage() {
         });
       }
     });
+  const handleListSubmit = (askPrice: number, expiresAt?: string) => {
+    if (!listingTarget || !address) return;
+    listPosition({
+      positionId: listingTarget.id,
+      askPrice,
+      impliedDiscount: computeImpliedDiscount(askPrice, listingTarget.expectedReturn),
+      listedAt: new Date().toISOString(),
+      expiresAt,
+      invoiceTokenId: listingTarget.invoice?.tokenId,
+      repaymentDate: listingTarget.invoice?.terms.repaymentDate,
+    });
+    toast.success(t("listing.success"));
+    setListingTarget(null);
   };
+
+  /** Export visible positions as a CSV file. Scoped to the connected address. */
+  const handleExportCsv = useCallback(() => {
+    if (!positionsData.length) return;
+    const rows = positionsToExportRows(positionsData);
+    exportCsv(rows as Record<string, unknown>[], portfolioExportFilename(), [
+      ...PORTFOLIO_EXPORT_HEADERS,
+    ]);
+  }, [positionsData]);
+
+  /** Capture the positions card DOM node as a PDF. Falls back to window.print(). */
+  const handleExportPdf = useCallback(() => {
+    if (!positionsData.length) return;
+    void exportPdf("investor-positions-card", portfolioPdfFilename());
+  }, [positionsData]);
+
+  const columns: ColumnDef<InvestorPosition>[] = [
+    {
+      id: "invoice",
+      header: t("table.invoice"),
+      accessor: (row) => row.invoice?.metadata.invoiceNumber ?? row.invoiceId,
+    },
+    {
+      id: "invested",
+      header: t("table.invested"),
+      accessor: (row) => row.investedAmount,
+      cell: (row) => formatCurrency(row.investedAmount),
+    },
+    {
+      id: "expected",
+      header: t("table.expectedReturn"),
+      accessor: (row) => row.expectedReturn,
+      cell: (row) => formatCurrency(row.expectedReturn),
+    },
+    {
+      id: "actions",
+      header: "",
+      sortable: false,
+      cell: (row) => (
+        <div className="flex items-center gap-2">
+          {row.status === "repaid" && (
+            <Button size="sm" onClick={() => handleClaim(row)}>
+              {t("table.claim")}
+            </Button>
+          )}
+          {row.status === "active" &&
+            (listings[row.id] ? (
+              <Button size="sm" variant="outline" onClick={() => unlistPosition(row.id)}>
+                {t("table.unlist")}
+              </Button>
+            ) : (
+              <Button size="sm" variant="outline" onClick={() => setListingTarget(row)}>
+                <Tag className="h-3.5 w-3.5" aria-hidden /> {t("table.listForSale")}
+              </Button>
+            ))}
+          <Link
+            href={`/marketplace/${row.invoice?.id ?? row.invoiceId}`}
+            className="text-xs text-primary hover:opacity-80"
+          >
+            {t("table.view")}
+          </Link>
+        </div>
+      ),
+    },
+  ];
 
   const stats = useMemo(
     () => [
@@ -252,14 +339,14 @@ export default function InvestorDashboardPage() {
         value: formatCurrency(
           positionsData.reduce((sum, p) => sum + p.investedAmount, 0),
         ),
-        icon: DollarSign,
+        icon: <DollarSign className="h-4 w-4" />,
       },
       {
         label: t("stats.expectedReturn"),
         value: formatCurrency(
           positionsData.reduce((sum, p) => sum + p.expectedReturn, 0),
         ),
-        icon: TrendingUp,
+        icon: <TrendingUp className="h-4 w-4" />,
       },
       {
         label: t("stats.yieldEarned"),
@@ -269,12 +356,12 @@ export default function InvestorDashboardPage() {
             0,
           ),
         ),
-        icon: BarChart3,
+        icon: <BarChart3 className="h-4 w-4" />,
       },
       {
         label: t("stats.activePositions"),
         value: String(positionsData.length),
-        icon: Store,
+        icon: <Store className="h-4 w-4" />,
       },
     ],
     [positionsData, formatCurrency, t],
@@ -314,6 +401,9 @@ export default function InvestorDashboardPage() {
     );
   }
 
+  // Empty portfolio: connected + success + zero positions
+  const isEmpty = positionsQuery.isSuccess && positionsData.length === 0;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -321,56 +411,120 @@ export default function InvestorDashboardPage() {
           <h1 className="text-2xl font-semibold text-white">{t("title")}</h1>
           <p className="text-sm text-zinc-400">{t("subtitle")}</p>
         </div>
-        <StaleDataBadge
-          updatedAt={positionsQuery.dataUpdatedAt}
-          isFetching={positionsQuery.isFetching}
-        />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <StatCard
-            key={stat.label}
-            label={stat.label}
-            value={stat.value}
-            icon={stat.icon}
+        <div className="flex items-center gap-2">
+          <StaleDataBadge
+            updatedAt={positionsQuery.dataUpdatedAt}
+            isFetching={positionsQuery.isFetching}
           />
-        ))}
+          {/* Export actions — disabled when loading or no positions */}
+          <button
+            type="button"
+            disabled={!positionsData.length || positionsQuery.isLoading}
+            aria-disabled={!positionsData.length || positionsQuery.isLoading}
+            aria-label={t("export.csvAriaLabel")}
+            title={!positionsData.length ? t("export.emptyTooltip") : undefined}
+            data-testid="export-csv-btn"
+            onClick={handleExportCsv}
+            className="rounded-md bg-zinc-800 px-3 py-1.5 text-sm text-zinc-200 transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-zinc-800 print:hidden"
+          >
+            {t("export.csv")}
+          </button>
+          <button
+            type="button"
+            disabled={!positionsData.length || positionsQuery.isLoading}
+            aria-disabled={!positionsData.length || positionsQuery.isLoading}
+            aria-label={t("export.pdfAriaLabel")}
+            title={!positionsData.length ? t("export.emptyTooltip") : undefined}
+            data-testid="export-pdf-btn"
+            onClick={handleExportPdf}
+            className="rounded-md bg-zinc-800 px-3 py-1.5 text-sm text-zinc-200 transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-zinc-800 print:hidden"
+          >
+            {t("export.pdf")}
+          </button>
+        </div>
       </div>
 
+      {/* Stats row — always visible so the user sees zeros, not nothing */}
+      <ErrorBoundary compact>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {stats.map((stat) => (
+            <StatCard
+              key={stat.label}
+              label={stat.label}
+              value={stat.value}
+              icon={stat.icon}
+            />
+          ))}
+        </div>
+      </ErrorBoundary>
+
+      {/* KYC card stays visible regardless of positions */}
       <KycStatusCard />
 
-      <ConcentrationRiskAlerts positions={positionsData} />
+      {isEmpty ? (
+        /* ── Empty portfolio state ─────────────────────────────────────── */
+        <EmptyState
+          variant="no-positions"
+          title={t("empty.title")}
+          description={t("empty.description")}
+          cta={{
+            label: t("browseMarketplace"),
+            onClick: () => router.push("/marketplace"),
+          }}
+          data-tour="investor-empty-state"
+        />
+      ) : (
+        <>
+          <ErrorBoundary compact>
+            <ConcentrationRiskAlerts positions={positionsData} />
+          </ErrorBoundary>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("allocation.title")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PortfolioDonut
-            positions={donutPositions}
-            onSegmentClick={handleSegmentClick}
-          />
-        </CardContent>
-      </Card>
+          {/* Portfolio donut charts */}
+          <ErrorBoundary>
+            <Card>
+              <CardHeader>
+                <CardTitle>{t("allocation.title")}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PortfolioDonut
+                  positions={donutPositions}
+                  activeFilter={donutFilter}
+                  onSegmentClick={handleSegmentClick}
+                />
+              </CardContent>
+            </Card>
+          </ErrorBoundary>
 
-      <SellerAnalyticsDashboard />
+          {/* Seller analytics — only shown when the investor has active listings */}
+          <ErrorBoundary compact>
+            <SellerAnalyticsDashboard
+              listings={Object.values(listings).filter((l) =>
+                positionsData.some((p) => p.id === l.positionId),
+              )}
+              positions={positionsData}
+            />
+          </ErrorBoundary>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3">
-          <CardTitle>{t("positions.title")}</CardTitle>
-          <Badge variant="secondary">
-            {t("positions.count", { count: filteredPositions.length })}
-          </Badge>
-        </CardHeader>
-        <CardContent>
-          <DataTable
-            data={filteredPositions}
-            columns={columns}
-            emptyMessage={t("positions.empty")}
-          />
-        </CardContent>
-      </Card>
+          {/* Positions data table */}
+          <ErrorBoundary>
+            <Card id="investor-positions-card">
+              <CardHeader className="flex flex-row items-center justify-between gap-3">
+                <CardTitle>{t("positions.title")}</CardTitle>
+                <Badge variant="secondary">
+                  {t("positions.count", { count: filteredPositions.length })}
+                </Badge>
+              </CardHeader>
+              <CardContent>
+                <DataTable
+                  data={filteredPositions}
+                  columns={columns}
+                  emptyMessage={t("positions.empty")}
+                />
+              </CardContent>
+            </Card>
+          </ErrorBoundary>
+        </>
+      )}
 
       <ListPositionDialog
         open={Boolean(listingTarget)}

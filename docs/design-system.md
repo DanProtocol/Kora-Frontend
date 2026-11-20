@@ -14,8 +14,30 @@ The Kora frontend uses a semantic, token-based design system built on Tailwind C
 ## Theming
 
 - **Dark-mode-first** with light mode via the `class` strategy (`darkMode: ["class"]` in Tailwind).
-- Theme switching is handled by `next-themes`; an inline script in `app/layout.tsx` prevents FOUC on first load.
+- The persisted preference (`light` / `dark` / `system`) lives in `uiStore`; an inline bootstrap script in `app/layout.tsx` applies the resolved class before first paint to prevent FOUC.
+- `lib/theme.ts` is the **single source of truth** for theme resolution: `resolveTheme()` is shared by the inline bootstrap script (`THEME_INIT_SCRIPT`) and `components/layout/ThemeProvider.tsx`, so the pre-paint class and the hydrated class can never drift when the OS switches color scheme. A unit test executes the script and compares its result against `resolveTheme` for every preference/OS combination.
 - Color tokens are defined as **HSL components** (e.g. `--color-primary: 174 72% 40%`) and consumed as `hsl(var(--primary))` in Tailwind.
+
+### Browser chrome color (`themeColor`)
+
+The mobile browser UI bar (and PWA title bar) follows the resolved theme via `THEME_COLORS` in `lib/theme.ts`:
+
+| Token | Value | Surface |
+| ----- | ----- | ------- |
+| `THEME_COLORS.light` | `#ffffff` | white page background |
+| `THEME_COLORS.dark` | `#09090b` | zinc-950 dashboard background |
+
+- `app/layout.tsx` exports a media-scoped `viewport.themeColor` (via `buildViewportThemeColor()`) so the server-rendered `<meta name="theme-color">` tags match the OS preference before hydration.
+- After hydration, `ThemeProvider` calls `applyBrowserThemeColor(resolved)`, which forces the resolved color onto every `theme-color` tag — this is what makes an in-app override (e.g. OS light + user-picked dark) win over the OS preference.
+- The manifest's `theme_color` / `background_color` (built in `lib/pwa/manifest.ts`) use the same dark token so the PWA install splash stays consistent. Keep them in sync via `THEME_COLORS`.
+
+### PWA manifest localization
+
+The manifest is served by the `/manifest.json` route handler (`app/manifest.json/route.ts`), not a static file, so it renders for the active `kora-locale`:
+
+- Shortcut **names** reuse the translated navbar labels (`nav.marketplace`, `nav.createInvoice`) so a shortcut's title matches its destination.
+- Shortcut `short_name`, descriptions and screenshot labels come from the `pwa.manifest` message namespace; missing keys fall back to English.
+- Shortcut URLs are **locale-agnostic** app paths (`/marketplace`, `/invoice/create`). The locale lives in the `kora-locale` cookie, never in the URL, so localized manifests must not ship locale-prefixed shortcut paths.
 
 ## Token categories
 
@@ -138,3 +160,33 @@ your change.
 2. Add `components/ui/<name>.stories.tsx` with at least `Default` and one variant/accessibility story.
 3. Export it from `components/ui/index.ts` if it is broadly reused; otherwise document its direct import path in the table above.
 4. Update this inventory doc so the new primitive appears in the correct table.
+
+## Layout & Landmark Structure
+
+Screen readers rely on semantic landmarks to navigate page regions efficiently. All major layout surfaces expose explicit ARIA roles and labels:
+
+| Component | Landmark | Label | Rationale |
+| --------- | -------- | ----- | --------- |
+| `Header` (navbar) | `banner` | Implicit via `<header>` in top-level layout | Primary site navigation; one per page |
+| `Footer` | `contentinfo` | `aria-labelledby="footer-copyright"` | Copyright, changelog, shortcuts; links footer region to copyright text |
+| `main` (layout children) | `main` | Implicit via `<main>` wrapper in layout | Primary page content; one per page |
+
+### Focus Management
+
+- **Modal dialogs** (`Dialog`, `Drawer`, `BottomSheet`) automatically trap focus and restore it to the trigger element on close via Radix UI primitives.
+- **Footer changelog button** stores a ref to the trigger; when `uiStore.changelogOpen` transitions from `true` → `false`, focus is programmatically restored to the button via `useEffect`.
+- **Page navigation** (via Next.js `<Link>`) moves focus to the new page's `<main>` element automatically; no custom focus management is needed for route changes.
+
+### Skip Links
+
+Currently not implemented. Consider adding a visually-hidden "Skip to main content" link at the start of `<body>` if user feedback indicates keyboard users are navigating through repetitive chrome on every page load.
+
+### Testing Landmarks
+
+Run `npm run test:a11y` (if available) to audit landmark structure. Manual verification:
+
+1. Enable a screen reader (NVDA on Windows, VoiceOver on macOS).
+2. Navigate by landmarks (NVDA: `D`/`Shift+D`, VoiceOver: `VO+U` → Landmarks).
+3. Verify `banner`, `main`, and `contentinfo` are announced and navigable.
+4. Confirm footer's label reads "Kora Protocol copyright" or similar localized text.
+

@@ -4,6 +4,7 @@
  */
 import * as StellarSdk from "@stellar/stellar-sdk";
 import { env } from "@/lib/env";
+import { logger } from "@/lib/logger";
 import type {
   AccountBalances,
   AccountTransaction,
@@ -131,9 +132,21 @@ export class HorizonNetworkError extends Error {
   }
 }
 
-// ─── Internal error normaliser ────────────────────────────────────────────────
+// ─── Horizon error normaliser ─────────────────────────────────────────────────
 
-function normaliseHorizonError(err: unknown, address?: string): never {
+/**
+ * Maps any Horizon failure onto one of the typed errors above so hooks can
+ * render stable messages:
+ *
+ * - HTTP 404            → `AccountNotFoundError`
+ * - HTTP 429            → `HorizonRateLimitError`
+ * - other HTTP status   → `HorizonNetworkError("HTTP <status>: …")`
+ * - no response (offline, DNS, CORS, non-Error throws) → `HorizonNetworkError`
+ *
+ * Exported for unit tests (`lib/__tests__/stellar-client-horizon.test.ts`);
+ * app code should rely on the public helpers that call it.
+ */
+export function normaliseHorizonError(err: unknown, address?: string): never {
   if (err instanceof Error) {
     // Horizon SDK wraps HTTP errors — check the response status
     const anyErr = err as { response?: { status?: number } };
@@ -146,13 +159,164 @@ function normaliseHorizonError(err: unknown, address?: string): never {
   throw new HorizonNetworkError(String(err));
 }
 
+// ─── Horizon 429 retry policy ─────────────────────────────────────────────────
+//
+// Bursty dashboard polling can trip Horizon's per-IP rate limit. Read-only
+// Horizon calls are wrapped in `withHorizonRetry`, which retries ONLY on
+// HTTP 429 with exponential backoff + jitter, honours `Retry-After` (or
+// `X-Ratelimit-Reset`) when present, and gives up after a capped number of
+// attempts. Every other error fails fast. Never wrap non-idempotent writes
+// (transaction submission) — a retried submit could double-spend a sequence.
+
+export interface HorizonRetryOptions {
+  /** Total attempts including the first call. */
+  maxAttempts?: number;
+  /** Backoff base for the first retry; doubles on each subsequent retry. */
+  baseDelayMs?: number;
+  /** Upper bound for a computed backoff delay. */
+  maxDelayMs?: number;
+  /** Server-requested waits longer than this abort retrying instead. */
+  maxRetryAfterMs?: number;
+  /** Injectable for tests. */
+  sleep?: (ms: number) => Promise<void>;
+  /** Injectable for tests; returns a value in [0, 1). */
+  random?: () => number;
+}
+
+export const HORIZON_RETRY_DEFAULTS = {
+  maxAttempts: 4,
+  baseDelayMs: 500,
+  maxDelayMs: 8_000,
+  maxRetryAfterMs: 30_000,
+} as const;
+
+/** Degraded-state warnings are logged at most once per this window. */
+export const HORIZON_DEGRADED_LOG_WINDOW_MS = 60_000;
+
+let lastDegradedLogAt = 0;
+/** Shared cooldown so concurrent callers back off together after a 429. */
+let horizonCooldownUntil = 0;
+
+/** Test-only: reset module-level retry state between tests. */
+export function __resetHorizonRetryState(): void {
+  lastDegradedLogAt = 0;
+  horizonCooldownUntil = 0;
+}
+
+type HorizonHttpError = {
+  response?: {
+    status?: number;
+    headers?: Record<string, string | undefined> | { get?: (name: string) => string | null };
+  };
+};
+
+function readHeader(err: unknown, name: string): string | undefined {
+  const headers = (err as HorizonHttpError)?.response?.headers;
+  if (!headers) return undefined;
+  if (typeof (headers as { get?: unknown }).get === "function") {
+    return (headers as { get: (n: string) => string | null }).get(name) ?? undefined;
+  }
+  const record = headers as Record<string, string | undefined>;
+  return record[name] ?? record[name.toLowerCase()];
+}
+
+/** True when the error is a Horizon HTTP 429 (raw SDK error or normalised). */
+export function isHorizonRateLimited(err: unknown): boolean {
+  if (err instanceof HorizonRateLimitError) return true;
+  return (err as HorizonHttpError)?.response?.status === 429;
+}
+
+/**
+ * Parse the server-requested wait from `Retry-After` (seconds or HTTP-date),
+ * falling back to Horizon's `X-Ratelimit-Reset` (seconds). Returns `null`
+ * when neither header is present or parseable.
+ */
+export function parseRetryAfterMs(err: unknown, now = Date.now()): number | null {
+  const retryAfter = readHeader(err, "retry-after");
+  if (retryAfter !== undefined && retryAfter.trim() !== "") {
+    const seconds = Number(retryAfter);
+    if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1000;
+    const date = Date.parse(retryAfter);
+    if (!Number.isNaN(date)) return Math.max(0, date - now);
+  }
+  const reset = readHeader(err, "x-ratelimit-reset");
+  if (reset !== undefined) {
+    const seconds = Number(reset);
+    if (Number.isFinite(seconds) && seconds >= 0) return seconds * 1000;
+  }
+  return null;
+}
+
+/**
+ * Exponential backoff with "equal jitter": half the window is fixed, half is
+ * random, so concurrent callers spread out without ever retrying instantly.
+ */
+export function computeHorizonBackoffMs(
+  retry: number,
+  baseDelayMs: number = HORIZON_RETRY_DEFAULTS.baseDelayMs,
+  maxDelayMs: number = HORIZON_RETRY_DEFAULTS.maxDelayMs,
+  random: () => number = Math.random,
+): number {
+  const exp = Math.min(maxDelayMs, baseDelayMs * 2 ** retry);
+  return Math.round(exp / 2 + random() * (exp / 2));
+}
+
+function logHorizonDegraded(context: Record<string, unknown>): void {
+  const now = Date.now();
+  if (now - lastDegradedLogAt < HORIZON_DEGRADED_LOG_WINDOW_MS) return;
+  lastDegradedLogAt = now;
+  logger.warn("[horizon] rate limited (HTTP 429); backing off", context);
+}
+
+const defaultSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+/**
+ * Run an idempotent Horizon read, retrying on HTTP 429 only.
+ *
+ * Re-throws the last error unchanged so callers can still pass it through
+ * `normaliseHorizonError`.
+ */
+export async function withHorizonRetry<T>(
+  fn: () => Promise<T>,
+  options: HorizonRetryOptions = {},
+): Promise<T> {
+  const {
+    maxAttempts = HORIZON_RETRY_DEFAULTS.maxAttempts,
+    baseDelayMs = HORIZON_RETRY_DEFAULTS.baseDelayMs,
+    maxDelayMs = HORIZON_RETRY_DEFAULTS.maxDelayMs,
+    maxRetryAfterMs = HORIZON_RETRY_DEFAULTS.maxRetryAfterMs,
+    sleep = defaultSleep,
+    random = Math.random,
+  } = options;
+
+  for (let attempt = 1; ; attempt++) {
+    const cooldown = horizonCooldownUntil - Date.now();
+    if (cooldown > 0) await sleep(cooldown);
+
+    try {
+      return await fn();
+    } catch (err) {
+      if (!isHorizonRateLimited(err) || attempt >= maxAttempts) throw err;
+
+      const backoff = computeHorizonBackoffMs(attempt - 1, baseDelayMs, maxDelayMs, random);
+      const retryAfter = parseRetryAfterMs(err);
+      if (retryAfter !== null && retryAfter > maxRetryAfterMs) throw err;
+
+      const delay = Math.max(backoff, retryAfter ?? 0);
+      horizonCooldownUntil = Math.max(horizonCooldownUntil, Date.now() + delay);
+
+      logHorizonDegraded({ attempt, maxAttempts, delayMs: delay, retryAfterMs: retryAfter });
+    }
+  }
+}
+
 // ─── Account helpers ──────────────────────────────────────────────────────────
 
 /**
  * Fetch raw account details from Horizon.
  */
 export async function getAccount(publicKey: string) {
-  return horizon.loadAccount(publicKey);
+  return withHorizonRetry(() => horizon.loadAccount(publicKey));
 }
 
 /**
@@ -167,9 +331,16 @@ export async function getAccount(publicKey: string) {
 export async function getAccountBalances(address: string): Promise<AccountBalances> {
   let account: Awaited<ReturnType<typeof horizon.loadAccount>>;
   try {
-    account = await horizon.loadAccount(address);
+    account = await withHorizonRetry(() => horizon.loadAccount(address));
   } catch (err) {
     normaliseHorizonError(err, address);
+  }
+
+  // Guard against proxies / misconfigured Horizon URLs returning a 200 with a
+  // body that is not an account record — surface it as a Horizon error rather
+  // than an opaque TypeError from iterating `undefined`.
+  if (!account || !Array.isArray(account.balances)) {
+    throw new HorizonNetworkError("malformed account response");
   }
 
   let xlm = "0";
@@ -221,7 +392,7 @@ export async function getUSDCBalance(address: string): Promise<number> {
  */
 export async function checkAccountExists(address: string): Promise<boolean> {
   try {
-    await horizon.loadAccount(address);
+    await withHorizonRetry(() => horizon.loadAccount(address));
     return true;
   } catch (err) {
     const anyErr = err as { response?: { status?: number } };
@@ -281,7 +452,7 @@ export async function getAccountTransactions(
 
   let page: Awaited<ReturnType<typeof builder.call>>;
   try {
-    page = await builder.call();
+    page = await withHorizonRetry(() => builder.call());
   } catch (err) {
     normaliseHorizonError(err, address);
   }
@@ -445,27 +616,367 @@ function parseAddressFromData(val: StellarSdk.xdr.ScVal): string {
 }
 
 /**
- * Parse a raw Soroban event data ScVal to extract a token/invoice ID.
+ * Parse an arbitrary Soroban ScVal to extract a token/invoice ID (u64, u32, i128, string, or map).
  */
-function parseTokenIdFromData(val: StellarSdk.xdr.ScVal): string {
+export function parseTokenIdFromScVal(val: StellarSdk.xdr.ScVal): string | null {
   try {
-    if (val.switch().name === "scvU64") return val.u64().toString();
-    if (val.switch().name === "scvMap") {
+    const sw = val.switch().name;
+    if (sw === "scvU64") {
+      return val.u64().toString();
+    }
+    if (sw === "scvU32") {
+      return String(val.u32());
+    }
+    if (sw === "scvI128") {
+      const parts = val.i128();
+      const hi = BigInt(parts.hi().toString());
+      const lo = BigInt(parts.lo().toString());
+      const shift = BigInt(2) ** BigInt(64);
+      const full = hi * shift + lo;
+      return full.toString();
+    }
+    if (sw === "scvString") {
+      const s = val.str().toString().trim();
+      return s.length > 0 ? s : null;
+    }
+    if (sw === "scvSymbol") {
+      const s = val.sym().toString().trim();
+      return s.length > 0 ? s : null;
+    }
+    if (sw === "scvMap") {
       const map = val.map();
       if (map) {
-        for (const key of ["token_id", "invoice_id", "id"]) {
+        for (const key of ["token_id", "invoice_id", "id", "tokenId"]) {
           const entry = map.find((e) => {
-            try { return e.key().sym().toString() === key; } catch { return false; }
+            try {
+              const k =
+                e.key().switch().name === "scvSymbol"
+                  ? e.key().sym().toString()
+                  : e.key().str().toString();
+              return k.toLowerCase() === key.toLowerCase();
+            } catch {
+              return false;
+            }
           });
           if (entry) {
-            try { return entry.val().u64().toString(); } catch { /* continue */ }
+            const parsed = parseTokenIdFromScVal(entry.val());
+            if (parsed) return parsed;
           }
         }
       }
     }
-    return "";
+    if (sw === "scvVec") {
+      const vec = val.vec();
+      if (vec && vec.length > 0) {
+        for (const item of vec) {
+          const parsed = parseTokenIdFromScVal(item);
+          if (parsed) return parsed;
+        }
+      }
+    }
+    return null;
   } catch {
-    return "";
+    return null;
+  }
+}
+
+/**
+ * Parse a raw Soroban event data ScVal to extract a token/invoice ID.
+ */
+function parseTokenIdFromData(val: StellarSdk.xdr.ScVal): string {
+  return parseTokenIdFromScVal(val) ?? "";
+}
+
+/**
+ * Extract token ID from TransactionMeta XDR object (v3 SorobanMeta return value or events).
+ */
+function extractFromTransactionMeta(meta: StellarSdk.xdr.TransactionMeta): string | null {
+  try {
+    const sw = typeof meta.switch === "function" ? meta.switch() : (meta as any)._switch;
+    const isV3 =
+      (meta as any).arm?.() === "v3" ||
+      sw === 3 ||
+      (typeof sw === "object" && sw !== null && (sw as any).name === "v3");
+
+    if (isV3) {
+      const sorobanMeta = meta.v3().sorobanMeta();
+      if (sorobanMeta) {
+        // 1. Try contract return value
+        const retVal = sorobanMeta.returnValue();
+        if (retVal) {
+          const parsed = parseTokenIdFromScVal(retVal);
+          if (parsed && parsed !== "0") return parsed;
+        }
+
+        // 2. Try contract events
+        const events = sorobanMeta.events();
+        if (events && events.length > 0) {
+          for (const ev of events) {
+            try {
+              const body = ev.body().v0();
+              const topics = body.topics();
+              if (topics.length > 0) {
+                const topic0 = parseTopicToString(topics[0]);
+                if (topic0 === "mint_invoice") {
+                  if (topics.length > 1) {
+                    const fromTopic = parseTokenIdFromScVal(topics[1]);
+                    if (fromTopic && fromTopic !== "0") return fromTopic;
+                  }
+                  const data = body.data();
+                  if (data) {
+                    const fromData = parseTokenIdFromScVal(data);
+                    if (fromData && fromData !== "0") return fromData;
+                  }
+                }
+              }
+            } catch {
+              // continue to next event
+            }
+          }
+        }
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Extract token ID from TransactionResult XDR object (InvokeHostFunctionSuccess result).
+ */
+function extractFromTransactionResult(res: StellarSdk.xdr.TransactionResult): string | null {
+  try {
+    const innerRes = res.result();
+    const innerSw =
+      typeof innerRes.switch === "function" ? innerRes.switch() : (innerRes as any)._switch;
+    const isSuccess =
+      (innerRes as any).arm?.() === "results" ||
+      innerSw === 0 ||
+      (typeof innerSw === "object" && innerSw !== null && (innerSw as any).name === "txSuccess");
+
+    if (isSuccess) {
+      const results = innerRes.results();
+      for (const opRes of results) {
+        try {
+          const tr = opRes.tr();
+          const trSw = typeof tr.switch === "function" ? tr.switch() : (tr as any)._switch;
+          const isInvokeHost =
+            (tr as any).arm?.() === "invokeHostFunctionResult" ||
+            (typeof trSw === "object" &&
+              trSw !== null &&
+              (trSw as any).name === "invokeHostFunctionResult");
+          if (isInvokeHost) {
+            const hostRes = tr.invokeHostFunctionResult();
+            const hostSw =
+              typeof hostRes.switch === "function" ? hostRes.switch() : (hostRes as any)._switch;
+            const isHostSuccess =
+              (hostRes as any).arm?.() === "success" ||
+              (typeof hostSw === "object" &&
+                hostSw !== null &&
+                (hostSw as any).name === "invokeHostFunctionSuccess");
+            if (isHostSuccess) {
+              const val = (hostRes as any).success?.();
+              if (val) {
+                const parsed = parseTokenIdFromScVal(val);
+                if (parsed && parsed !== "0") return parsed;
+              }
+            }
+          }
+        } catch {
+          // continue
+        }
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function parseTokenIdFromXdrString(str: string): string | null {
+  try {
+    const scv = StellarSdk.xdr.ScVal.fromXDR(str, "base64");
+    const parsed = parseTokenIdFromScVal(scv);
+    if (parsed) return parsed;
+  } catch {
+    // not ScVal
+  }
+
+  try {
+    const meta = StellarSdk.xdr.TransactionMeta.fromXDR(str, "base64");
+    const parsed = extractFromTransactionMeta(meta);
+    if (parsed) return parsed;
+  } catch {
+    // not TransactionMeta
+  }
+
+  try {
+    const res = StellarSdk.xdr.TransactionResult.fromXDR(str, "base64");
+    const parsed = extractFromTransactionResult(res);
+    if (parsed) return parsed;
+  } catch {
+    // not TransactionResult
+  }
+
+  return null;
+}
+
+/**
+ * Extract minted NFT token ID from a Soroban transaction result, simulation preview,
+ * confirmed transaction response, or Horizon response.
+ *
+ * Handles:
+ *  - Soroban RPC GetTransactionResponse with `returnValue` (ScVal or base64)
+ *  - Soroban RPC response with `resultMetaXdr` (v3 SorobanMeta returnValue or events)
+ *  - Soroban RPC response with `resultXdr` (TransactionResult InvokeHostFunction success)
+ *  - Horizon transaction records with `result_meta_xdr` or `result_xdr`
+ *  - ContractEvent[] or GetContractEventsResult (checks for "mint_invoice" event)
+ *  - Raw ScVal or base64 string
+ *  - Pre-parsed objects with tokenId / token_id
+ *
+ * Returns the parsed token ID as a string, or null if no token ID could be extracted.
+ */
+export function extractMintedTokenId(txResult: unknown): string | null {
+  if (!txResult) return null;
+
+  if (typeof txResult === "string") {
+    const trimmed = txResult.trim();
+    if (!trimmed) return null;
+    return parseTokenIdFromXdrString(trimmed);
+  }
+
+  if (typeof txResult !== "object") {
+    if (typeof txResult === "number" || typeof txResult === "bigint") {
+      return String(txResult);
+    }
+    return null;
+  }
+
+  const record = txResult as Record<string, unknown>;
+
+  // 1. Direct ScVal instance
+  if (typeof (record as any).switch === "function") {
+    return parseTokenIdFromScVal(txResult as StellarSdk.xdr.ScVal);
+  }
+
+  // 2. Pre-parsed tokenId / token_id fields
+  if (record.tokenId !== undefined && record.tokenId !== null) {
+    const s = String(record.tokenId).trim();
+    if (s && s !== "undefined" && s !== "null" && s !== "NaN") return s;
+  }
+  if (record.token_id !== undefined && record.token_id !== null) {
+    const s = String(record.token_id).trim();
+    if (s && s !== "undefined" && s !== "null" && s !== "NaN") return s;
+  }
+
+  // 3. Soroban RPC returnValue (ScVal instance or base64 string)
+  if (record.returnValue) {
+    if (typeof (record.returnValue as any).switch === "function") {
+      const parsed = parseTokenIdFromScVal(record.returnValue as StellarSdk.xdr.ScVal);
+      if (parsed) return parsed;
+    } else if (typeof record.returnValue === "string") {
+      try {
+        const scv = StellarSdk.xdr.ScVal.fromXDR(record.returnValue, "base64");
+        const parsed = parseTokenIdFromScVal(scv);
+        if (parsed) return parsed;
+      } catch {
+        // continue
+      }
+    }
+  }
+
+  // 4. Soroban RPC resultMetaXdr or Horizon result_meta_xdr
+  const metaXdr = (record.resultMetaXdr ?? record.result_meta_xdr) as string | undefined;
+  if (typeof metaXdr === "string" && metaXdr.trim() !== "") {
+    try {
+      const meta = StellarSdk.xdr.TransactionMeta.fromXDR(metaXdr, "base64");
+      const parsed = extractFromTransactionMeta(meta);
+      if (parsed) return parsed;
+    } catch {
+      // continue
+    }
+  }
+
+  // 5. Soroban RPC resultXdr or Horizon result_xdr
+  const resXdr = (record.resultXdr ?? record.result_xdr) as string | undefined;
+  if (typeof resXdr === "string" && resXdr.trim() !== "") {
+    try {
+      const res = StellarSdk.xdr.TransactionResult.fromXDR(resXdr, "base64");
+      const parsed = extractFromTransactionResult(res);
+      if (parsed) return parsed;
+    } catch {
+      // continue
+    }
+  }
+
+  // 6. Contract events array (record.events or Array)
+  const events = Array.isArray(txResult)
+    ? txResult
+    : Array.isArray(record.events)
+    ? record.events
+    : null;
+
+  if (events && events.length > 0) {
+    for (const ev of events) {
+      if (ev && typeof ev === "object") {
+        const e = ev as Partial<ContractEvent> & { topic?: unknown[]; value?: unknown };
+        if (e.type === "mint_invoice" && e.tokenId) {
+          return String(e.tokenId);
+        }
+        if (Array.isArray(e.topic) && e.topic.length > 0) {
+          try {
+            const t0 =
+              typeof e.topic[0] === "string"
+                ? StellarSdk.xdr.ScVal.fromXDR(e.topic[0], "base64")
+                : (e.topic[0] as StellarSdk.xdr.ScVal);
+            const topicName = parseTopicToString(t0);
+            if (topicName === "mint_invoice") {
+              if (e.topic.length > 1) {
+                const t1 =
+                  typeof e.topic[1] === "string"
+                    ? StellarSdk.xdr.ScVal.fromXDR(e.topic[1], "base64")
+                    : (e.topic[1] as StellarSdk.xdr.ScVal);
+                const fromT1 = parseTokenIdFromScVal(t1);
+                if (fromT1) return fromT1;
+              }
+              if (e.value) {
+                const val =
+                  typeof e.value === "string"
+                    ? StellarSdk.xdr.ScVal.fromXDR(e.value, "base64")
+                    : (e.value as StellarSdk.xdr.ScVal);
+                const fromVal = parseTokenIdFromScVal(val);
+                if (fromVal) return fromVal;
+              }
+            }
+          } catch {
+            // continue
+          }
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Fetch transaction status and extract the minted token ID by tx hash.
+ */
+export async function fetchMintedTokenId(hash: string): Promise<string | null> {
+  try {
+    const tx = await waitForTransaction(hash, 5, 200);
+    return extractMintedTokenId(tx);
+  } catch {
+    try {
+      const record = await withHorizonRetry(
+        () => horizon.transactions().transaction(hash).call(),
+        { maxAttempts: 1, baseDelayMs: 0 }
+      );
+      return extractMintedTokenId(record);
+    } catch {
+      return null;
+    }
   }
 }
 
@@ -868,7 +1379,7 @@ export interface TransactionDetails {
  * Uses NEXT_PUBLIC_STELLAR_HORIZON_URL — no hardcoded URLs.
  */
 export async function fetchTransactionDetails(hash: string): Promise<TransactionDetails> {
-  const tx = await horizon.transactions().transaction(hash).call();
+  const tx = await withHorizonRetry(() => horizon.transactions().transaction(hash).call());
   return {
     hash: tx.hash,
     ledger: tx.ledger_attr,

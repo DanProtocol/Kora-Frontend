@@ -1,4 +1,24 @@
 {
+  "metadata": {
+    "investorDashboard": {
+      "title": "لوحة المستثمر",
+      "description": "تابع مراكزك وعائدك وأداء محفظتك على Kora Protocol.",
+      "ogDescription": "راقب استثماراتك وعائدك ونشاط السداد في Kora Protocol.",
+      "ogImageAlt": "لوحة المستثمر في Kora Protocol"
+    },
+    "smeDashboard": {
+      "title": "لوحة المنشآت الصغيرة والمتوسطة",
+      "description": "أدر فواتيرك وتمويلك ومدفوعاتك على Kora Protocol.",
+      "ogDescription": "تابع تمويل الفواتير والمدفوعات من لوحة منشأتك على Kora Protocol.",
+      "ogImageAlt": "لوحة المنشآت الصغيرة والمتوسطة في Kora Protocol"
+    },
+    "settings": {
+      "title": "الإعدادات",
+      "description": "أدر إشعاراتك وحدودك وتفضيلاتك في Kora Protocol.",
+      "ogDescription": "اضبط الإشعارات وحدود التركيز والتفضيلات في Kora Protocol.",
+      "ogImageAlt": "إعدادات Kora Protocol"
+    }
+  },
   "nav": {
     "marketplace": "السوق",
     "invest": "استثمر",
@@ -49,7 +69,31 @@
     "reconnect": "إعادة ربط المحفظة",
     "reconnecting": "جارٍ إعادة الربط...",
     "restoringSession": "جارٍ استعادة جلسة المحفظة...",
-    "balanceLoadFailed": "تعذر تحميل الأرصدة"
+    "balanceLoadFailed": "تعذر تحميل الأرصدة",
+    "unfundedAccountTitle": "فعّل حساب Stellar الخاص بك",
+    "unfundedAccountDescription": "لا يحتوي هذا الحساب على XLM بعد. موّله لتفعيله وتحميل الأرصدة.",
+    "fundWithXlm": "تمويل الحساب بـ XLM عبر Friendbot",
+    "walletConnected": "تم الاتصال بالمحفظة",
+    "redirecting": "جارٍ توجيهك إلى لوحة التحكم…",
+    "mobileApp": "تطبيق الجوال",
+    "openInApp": "افتح في التطبيق",
+    "deepLinkWaiting": "في انتظار فتح تطبيق المحفظة…",
+    "trustline": {
+      "eurc": {
+        "cta": "إضافة خط ثقة EURC",
+        "adding": "جارٍ إضافة EURC…",
+        "loading": "جارٍ إضافة خط ثقة EURC…",
+        "success": "تمت إضافة خط ثقة EURC بنجاح",
+        "error": "فشل إضافة خط ثقة EURC"
+      },
+      "usdc": {
+        "cta": "إضافة خط ثقة USDC",
+        "adding": "جارٍ إضافة USDC…",
+        "loading": "جارٍ إضافة خط ثقة USDC…",
+        "success": "تمت إضافة خط ثقة USDC — سيتم تحديث الرصيد قريباً",
+        "error": "فشل إضافة خط ثقة USDC"
+      }
+    }
   },
   "transaction": {
     "building": "جارٍ بناء المعاملة…",
@@ -167,6 +211,18 @@
       "dueSoonest": "تاريخ الاستحقاق: الأقرب",
       "dueLatest": "تاريخ الاستحقاق: الأبعد",
       "newest": "الأحدث إدراجًا"
+    },
+    "jurisdictionLabels": {
+      "US": "الولايات المتحدة",
+      "EU": "الاتحاد الأوروبي",
+      "UK": "المملكة المتحدة",
+      "NG": "نيجيريا",
+      "KE": "كينيا",
+      "GH": "غانا",
+      "ZA": "جنوب أفريقيا",
+      "OTHER": "أخرى",
+      "IN": "الهند",
+      "BR": "البرازيل"
     },
     "categoryLabels": {
       "manufacturing": "التصنيع",
@@ -303,7 +359,15 @@
     },
     "hint": {
       "minRemaining": "الحد الأدنى: ${min} · الطاقة المتبقية: ${remaining}"
-    }
+    },
+    "ipfsLoadingPreview": "جارٍ تحميل معاينة المستند…",
+    "ipfsRetry": "إعادة المحاولة",
+    "ipfsOpenInNewTab": "افتح في تبويب جديد",
+    "ipfsErrorTitle": "معاينة المستند غير متاحة",
+    "ipfsErrorDesc": "لم تستجب بوابة IPFS في الوقت المناسب. يمكنك إعادة المحاولة أو فتح المستند مباشرة.",
+    "ipfsOfflineTitle": "أنت غير متصل بالإنترنت",
+    "ipfsOfflineDesc": "تتطلب معاينة المستند اتصالاً بالإنترنت.",
+    "ipfsDownloadPdf": "تنزيل PDF"
   },
   "createInvoice": {
     "title": "إنشاء فاتورة",
@@ -369,6 +433,7 @@
       "errors": {
         "tooLarge": "حجم الملف كبير جدًا. الحجم الأقصى هو 10 ميغابايت بالضبط.",
         "invalidType": "نوع الملف غير صالح. يُسمح فقط بمستندات PDF.",
+        "invalidMagicBytes": "الملف المحدد ليس مستند PDF صالح (الرأس %PDF- مفقود).",
         "required": "يرجى رفع ملف PDF للفاتورة قبل السك.",
         "virusScanRejected": "تم رفض الملف بواسطة فحص الأمان",
         "virusScanRejectedDescription": "{reason} يرجى تحديد ملف مختلف والمحاولة مرة أخرى.",
@@ -386,6 +451,10 @@
       "title": "تم سك الفاتورة!",
       "subtitle": "تم تحويل فاتورتك إلى رمز NFT على شبكة Stellar Soroban وهي جاهزة للتمويل.",
       "tokenId": "معرّف رمز NFT",
+      "tokenIdFormatted": "#{id}",
+      "tokenPending": "قيد التأكيد",
+      "syncingBadge": "مزامنة",
+      "indexerLag": "الفهرسة قيد التنفيذ",
       "txHash": "تجزئة المعاملة",
       "ipfsCid": "معرّف محتوى بيانات IPFS",
       "verifyStellar": "التحقق على Stellar Expert",
@@ -458,6 +527,9 @@
       "message": "أنشئ أول فاتورة لبدء جمع السيولة."
     },
     "batch": {
+      "disabledTitle": "الإجراءات المجمّعة معطّلة",
+      "disabledDesc": "الإلغاء والسداد المجمّعان معطّلان في هذا النشر. يمكن للمشغّلين المستضافين ذاتيًا تفعيلهما بتعيين {envVar}=true.",
+      "disabledDocs": "توثيق أعلام الميزات",
       "title": "ملخص العملية الدُفعية",
       "exportSelected": "تصدير المحدد",
       "processingLabel": "جارٍ إلغاء {count} فاتورة..."
@@ -496,14 +568,34 @@
     "browseMarketplace": "تصفح السوق",
     "connectTitle": "ربط محفظتك",
     "connectDesc": "ربط المحفظة لعرض محفظة استثماراتك",
+    "connectWallet": {
+      "title": "ربط محفظتك",
+      "description": "ربط المحفظة لعرض محفظة استثماراتك والبدء في كسب العوائد."
+    },
+    "error": {
+      "title": "فشل تحميل المحفظة",
+      "description": "تعذر جلب مراكزك. تحقق من اتصالك وحاول مجدداً.",
+      "timeout": "يستغرق تحميل محفظتك وقتاً أطول من المعتاد. يرجى إعادة المحاولة.",
+      "retry": "إعادة المحاولة"
+    },
     "stats": {
       "portfolioValue": "قيمة المحفظة",
       "expectedYield": "العائد المتوقع",
+      "expectedReturn": "العائد المتوقع",
+      "yieldEarned": "العائد المكتسب",
       "activePositions": "المراكز النشطة",
       "avgApr": "متوسط APR",
       "activePositionsChange": "{count} مركز نشط",
       "returnChange": "عائد {percent}%",
       "acrossPositions": "عبر كل المراكز"
+    },
+    "allocation": {
+      "title": "توزيع المحفظة"
+    },
+    "positions": {
+      "title": "مراكزك",
+      "count": "{count} مركز",
+      "empty": "لا توجد مراكز تطابق الفلتر الحالي."
     },
     "table": {
       "invoice": "الفاتورة",
@@ -515,16 +607,29 @@
       "risk": "المخاطرة",
       "dueDate": "تاريخ الاستحقاق",
       "claim": "استلام",
-      "view": "عرض ←"
+      "view": "عرض ←",
+      "listForSale": "عرض للبيع",
+      "unlist": "إلغاء العرض"
+    },
+    "listing": {
+      "success": "تم عرض المركز للبيع"
     },
     "activePositions": "المراكز النشطة",
     "allocationRisk": "التوزيع حسب مستوى المخاطرة",
     "allocationJurisdiction": "التوزيع حسب الجهة القضائية",
     "empty": {
-      "title": "لا توجد مراكز",
+      "title": "لا توجد مراكز بعد",
+      "description": "موّل الفواتير في السوق لبدء بناء محفظتك.",
       "message": "موّل الفواتير في السوق لبناء محفظتك."
     },
-    "fundTestnet": "تمويل حساب الاختبار"
+    "fundTestnet": "تمويل حساب الاختبار",
+    "export": {
+      "csv": "تصدير CSV",
+      "pdf": "تصدير PDF",
+      "csvAriaLabel": "تصدير المراكز كـ CSV",
+      "pdfAriaLabel": "تصدير المراكز كـ PDF",
+      "emptyTooltip": "لا توجد مراكز للتصدير"
+    }
   },
   "transactions": {
     "title": "سجل المعاملات",
@@ -627,7 +732,7 @@
       "detailsUnavailable": "التفاصيل غير متوفرة",
       "description": "الوصف",
       "error": "خطأ",
-      "viewExplorer": "عرض في المستكشف"
+      "viewExplorer": "عرض في المست explorer"
     }
   },
   "analytics": {
@@ -780,11 +885,14 @@
     "error": "خطأ",
     "rpcDown": "تعطل RPC",
     "rpcDegraded": "RPC متدهور",
-    "statusAriaLabel": "حالة الشبكة: {status} على {network}"
+    "statusAriaLabel": "حالة الشبكة: {status} على {network}",
+    "horizonDegradedToast": "استجابة Horizon بطيئة",
+    "horizonDownToast": "Horizon غير متاح",
+    "horizonToastHint": "قد تكون الأرصدة وسجل المعاملات غير محدّثة. يرجى المحاولة مرة أخرى بعد بضع دقائق."
   },
   "offline": {
     "title": "أنت غير متصل بالإنترنت",
-    "subtitle": "يتطلب بروتوكول Kora اتصالاً بالإنترنت للتفاعل مع شبكة Stellar. تحقق من اتصالك وحاول مجددًا.",
+    "subtitle": "يتطلب بروتوكول Kora اتصالاً بالإنترنت للتفاعل مع شبكة Stellar. تحقق من اتصالك وحاول مجدداً.",
     "availableOffline": "متاح دون اتصال",
     "requiresConnection": "يتطلب اتصالاً",
     "cachedListings": "إدراجات السوق التي تم زيارتها مسبقًا",
@@ -818,7 +926,14 @@
     "statusSuccess": "تم الإرسال",
     "statusError": "فشل",
     "statusPending": "في قائمة الانتظار",
-    "badgeAriaLabel": "{count} معاملة (معاملات) معلقة"
+    "badgeAriaLabel": "{count} معاملة (معاملات) معلقة",
+    "statusExhausted": "تم الوصول إلى الحد الأقصى من المحاولات",
+    "retryIn": "إعادة المحاولة خلال {seconds} ثانية",
+    "retryExhausted": "تم الوصول إلى الحد الأقصى من المحاولات",
+    "retryExhaustedDesc": "تعذّر إرسال هذه المعاملة بعد 5 محاولات. انسخ الـ XDR الموقّع لإعادة الإرسال يدويًا، أو تجاهله.",
+    "copyXdrAriaLabel": "نسخ الـ XDR الموقّع إلى الحافظة",
+    "xdrCopied": "تم نسخ الـ XDR الموقّع إلى الحافظة",
+    "xdrCopyFailed": "فشل نسخ الـ XDR"
   },
   "notFound": {
     "title": "الصفحة غير موجودة",
@@ -831,10 +946,16 @@
   },
   "error": {
     "title": "حدث خطأ ما",
-    "description": "حدث خطأ غير متوقع. يمكنك المحاولة مجددًا أو العودة إلى الصفحة الرئيسية.",
+    "description": "حدث خطأ غير متوقع. يمكنك المحاولة مجدّدًا أو العودة إلى الصفحة الرئيسية.",
     "tryAgain": "حاول مجددًا",
     "goHome": "الذهاب للرئيسية",
     "goMarketplace": "الذهاب إلى السوق"
+  },
+  "globalError": {
+    "title": "حدث خطأ ما",
+    "description": "تسبّب خطأ جسيم في تعذّر تحميل التطبيق. أعد تحميل الصفحة للمحاولة مجدّدًا.",
+    "tryAgain": "حاول مجددًا",
+    "reload": "إعادة تحميل الصفحة"
   },
   "common": {
     "loading": "جارٍ التحميل…",
@@ -872,7 +993,9 @@
     "title": "شبكة خاطئة",
     "message": "شبكة خاطئة: متصل بـ {current}، لكن هذا التطبيق يتطلب {expected}{passphrase}. يرجى تغيير شبكة محفظتك للمتابعة.",
     "passphraseMismatch": " (عدم تطابق العبارة السرية)",
-    "dismiss": "تجاهل تحذير الشبكة الخاطئة"
+    "dismiss": "تجاهل تحذير الشبكة الخاطئة",
+    "fix": "إصلاح",
+    "switchNetwork": "تبديل الشبكة"
   },
   "addressBook": {
     "title": "دفتر العناوين",
@@ -933,13 +1056,61 @@
     "gotIt": "حسنًا"
   },
   "settings": {
+    "error": {
+      "title": "تعذّر تحميل الإعدادات",
+      "description": "حدث خطأ أثناء تحميل إعداداتك. يرجى المحاولة مرة أخرى."
+    },
     "title": "الإعدادات",
     "subtitle": "إدارة تفضيلات الإشعارات وجولة المنتج.",
     "connectTitle": "اربط محفظتك",
     "connectDesc": "تُحفظ الإعدادات لكل محفظة على حدة. اربط محفظتك لعرض تفضيلاتك وتغييرها.",
     "connectCta": "ربط المحفظة",
     "navLabel": "الإعدادات",
-    "openFull": "فتح الإعدادات الكاملة"
+    "openFull": "فتح الإعدادات الكاملة",
+    "notifications": {
+      "sectionTitle": "تفضيلات الإشعارات",
+      "sectionDesc": "تحكّم في التنبيهات التي تظهر أثناء سير عملك.",
+      "maturityReminder": {
+        "label": "تذكيرات الاستحقاق",
+        "description": "تذكيري قبل تاريخ استحقاق الفاتورة."
+      },
+      "fundingAlerts": {
+        "label": "تنبيهات التمويل",
+        "description": "إشعار عند وصول فاتورتك إلى أهداف التمويل."
+      },
+      "repaymentAlerts": {
+        "label": "تنبيهات السداد",
+        "description": "إشعار عند اقتراب موعد السداد أو اكتماله."
+      },
+      "reminderTiming": {
+        "label": "توقيت التذكير",
+        "description": "اختر متى تريد التنبيه قبل تاريخ الاستحقاق.",
+        "day1": "يوم واحد قبل الاستحقاق",
+        "day3": "٣ أيام قبل الاستحقاق",
+        "day7": "٧ أيام قبل الاستحقاق"
+      },
+      "resetDefaults": "إعادة الضبط إلى الافتراضي",
+      "toggleAriaLabel": "تبديل {label}",
+      "tourSection": {
+        "title": "جولة الإعداد"
+      },
+      "shortcutsSection": {
+        "title": "اختصارات لوحة المفاتيح",
+        "description": "فعّل اختصارات لوحة المفاتيح العالمية للتنقل بشكل أسرع.",
+        "enableLabel": "تفعيل الاختصارات",
+        "enableDesc": "اضغط {key} لعرض كل الاختصارات.",
+        "toggleAriaLabel": "تبديل اختصارات لوحة المفاتيح"
+      },
+      "diagnosticsSection": {
+        "title": "تشخيصات الدعم",
+        "description": "تصدير لقطة معقّمة لجلسة المحفظة مع حالة الشبكة وأعلام الميزات.",
+        "exportButton": "تصدير JSON للتشخيصات",
+        "importButton": "استيراد التشخيصات",
+        "exportNote": "يتضمن التصدير المزوّد والشبكة وأعلام جلسة الحزمة وأعلام الميزات. لا تُضمَّن أسرار أو عبارات بذر أو JWTs أو عناوين كاملة.",
+        "importSuccess": "تم استيراد التشخيصات لأغراض تصحيح الأخطاء المحلية.",
+        "importFailed": "فشل استيراد التشخيصات."
+      }
+    }
   },
   "shortcuts": {
     "title": "اختصارات لوحة المفاتيح",
@@ -977,13 +1148,7 @@
     "pageSme": "فواتيري",
     "pageTransactions": "سجل المعاملات",
     "pageAnalytics": "التحليلات",
-    "synonyms": [
-      "ربط المحفظة",
-      "إنشاء فاتورة",
-      "فصل المحفظة",
-      "اختصارات",
-      "اختصارات لوحة المفاتيح"
-    ]
+    "synonyms": ["ربط المحفظة", "إنشاء فاتورة", "فصل المحفظة", "اختصارات", "اختصارات لوحة المفاتيح"]
   },
   "feedback": {
     "sendFeedback": "إرسال ملاحظات",
@@ -1219,9 +1384,25 @@
     "dismiss": "تجاهل",
     "snoozeDay": "تأجيل يوم واحد",
     "snoozeWeek": "تأجيل أسبوع",
+    "diversifyCta": "ابحث عن خيارات للتنويع",
     "settings": "ضبط الحدود",
     "critical": "حرج",
-    "warning": "تحذير"
+    "warning": "تحذير",
+    "thresholdsTitle": "حدود التركّز",
+    "thresholdsDescription": "نبّه على محفظتك عندما يتجاوز مدين واحد أو ولاية قضائية أو فئة مخاطر واحدة هذه النسب من قيمتها.",
+    "dimensions": {
+      "debtor": "مدين واحد",
+      "jurisdiction": "ولاية قضائية واحدة",
+      "riskTier": "فئة مخاطر واحدة"
+    },
+    "dimensionHints": {
+      "debtor": "التنبيه عندما يتجاوز مدين واحد هذه النسبة من محفظتك.",
+      "jurisdiction": "التنبيه عندما تتجاوز ولاية قضائية واحدة هذه النسبة من محفظتك.",
+      "riskTier": "التنبيه عندما تتجاوز فئة مخاطر واحدة هذه النسبة من محفظتك."
+    },
+    "sliderAria": "شريط تمرير حد {dimension}",
+    "percentageAria": "نسبة حد {dimension}",
+    "resetToDefaults": "إعادة التعيين إلى الإعدادات الافتراضية"
   },
   "vintageCohorts": {
     "title": "مجموعات حسب شهر التمويل",
@@ -1234,6 +1415,23 @@
     "empty": "لا توجد مراكز ممولة هذا الشهر",
     "noData": "لا توجد مراكز ممولة للتجميع بعد.",
     "export": "تصدير المجموعات"
+  },
+  "secondary": {
+    "filters": {
+      "tenor": {
+        "all": "كل المدد",
+        "0-30": "0 - 30 يومًا",
+        "31-60": "31 - 60 يومًا",
+        "61-90": "61 - 90 يومًا",
+        "90+": "90+ يومًا"
+      },
+      "yield": {
+        "0": "أي عائد",
+        "5": "عائد 5%+",
+        "10": "عائد 10%+",
+        "15": "عائد 15%+"
+      }
+    }
   },
   "secondaryMarket": {
     "title": "السوق الثانوي",
@@ -1361,5 +1559,66 @@
     "legendItemAria": "تصفح السوق مع التصفية حسب {name}: {percent}",
     "filteringBy": "تصفية السوق حسب <strong>{dimension}</strong>: {value}",
     "clearFilter": "مسح عامل التصفية"
+  },
+  "kyc": {
+    "title": "التحقق من الهوية (KYC) عبر Synaps",
+    "description": "تحقق من هويتك عبر Synaps لرفع حدود الاستثمار الخاصة بك.",
+    "intro": {
+      "body": "للامتثال للمعايير التنظيمية العالمية، يجب عليك التحقق من هويتك. تتولى Synaps عملية التحقق بشكل آمن وتستغرق نحو دقيقتين.",
+      "requirementsTitle": "ما ستحتاج إليه:",
+      "requirementId": "بطاقة هوية حكومية أو جواز سفر",
+      "requirementSelfie": "صورة سيلفي واضحة",
+      "requirementAddress": "إثبات العنوان (لحدود المستويات الأعلى)",
+      "start": "بدء عملية التحقق"
+    },
+    "upload": {
+      "docTypeLabel": "اختر نوع المستند:",
+      "passport": "جواز السفر",
+      "idCard": "بطاقة الهوية الوطنية",
+      "dropzone": "اسحب مستندك وأفلته هنا، أو انقر للتصفح",
+      "dropzoneHint": "يقبل ملفات PDF أو JPG أو PNG حتى 10 ميغابايت",
+      "back": "رجوع",
+      "verifySuccess": "تحقق (نجاح)",
+      "verifyFail": "تحقق (فشل)"
+    },
+    "verifying": {
+      "title": "جارٍ التحقق من المستندات",
+      "body": "تقوم فحوصات Synaps الآلية بتحليل مستندك ومراجعة قواعد بيانات الامتثال..."
+    },
+    "success": {
+      "title": "تم التحقق من هويتك بنجاح!",
+      "body": "شكرًا لك! حالة KYC الخاصة بك الآن موثقة، وتمت ترقية حدود الاستثمار في حسابك.",
+      "continue": "متابعة"
+    },
+    "failed": {
+      "title": "فشل التحقق",
+      "body": "تعذّر على Synaps التحقق من مستندك تلقائيًا. تأكد من أن صورة المستند واضحة وغير مقصوصة وأن جميع التفاصيل ظاهرة.",
+      "retry": "حاول مرة أخرى"
+    }
+  },
+  "pwa": {
+    "manifest": {
+      "shortcuts": {
+        "marketplace": {
+          "shortName": "السوق",
+          "description": "تصفح قائمة الفواتير"
+        },
+        "createInvoice": {
+          "shortName": "إنشاء",
+          "description": "رمز فاتورة جديدة"
+        }
+      },
+      "screenshots": {
+        "wide": "سوق Kora Protocol",
+        "narrow": "Kora Protocol على الجوال"
+      }
+    }
+  },
+  "ui": {
+    "select": {
+      "loading": "جارٍ تحميل الخيارات…",
+      "optionsLoaded": "{count, plural, =0 {لا توجد خيارات متاحة} one {خيار واحد متاح} two {خياران متاحان} few {# خيارات متاحة} many {# خيارًا متاحًا} other {# خيار متاح}}",
+      "loadError": "تعذّر تحميل الخيارات"
+    }
   }
 }

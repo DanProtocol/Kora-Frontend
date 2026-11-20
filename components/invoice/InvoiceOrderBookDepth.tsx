@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import EmptyState from "@/components/ui/EmptyState";
+import { useShallow } from "zustand/react/shallow";
 import { usePositionListingStore } from "@/store/positionListingStore";
 import { formatCurrency, cn } from "@/lib/utils";
 import type { PositionListingMeta } from "@/store/positionListingStore";
@@ -45,12 +46,16 @@ export function InvoiceOrderBookDepth({
   className,
 }: InvoiceOrderBookDepthProps) {
   const t = useTranslations("invoiceDetail.orderBook");
-  const { getListingsByInvoiceToken } = usePositionListingStore();
-
-  const listings: PositionListingMeta[] = useMemo(
-    () => getListingsByInvoiceToken(invoiceTokenId),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [invoiceTokenId, getListingsByInvoiceToken]
+  // Subscribe to the listings themselves (not the stable getter) so the table
+  // recomputes when a position is listed, re-priced or delisted. `useShallow`
+  // keeps the filtered array referentially stable while this invoice's
+  // listings are unchanged, so edits to other invoices don't re-render it.
+  const listings: PositionListingMeta[] = usePositionListingStore(
+    useShallow((state) =>
+      Object.values(state.listings).filter(
+        (l) => l.invoiceTokenId === invoiceTokenId
+      )
+    )
   );
 
   const depthRows: DepthRow[] = useMemo(() => {
@@ -137,9 +142,18 @@ export function InvoiceOrderBookDepth({
                 >
                   {/* Depth visualisation bar */}
                   <span
+                    role="progressbar"
+                    aria-valuenow={
+                      Math.round((row.cumulativeVolume / maxCumulative) * 100)
+                    }
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label={t("depthProgress", {
+                      positionId: row.positionId,
+                      value: formatCurrency(row.cumulativeVolume, currency),
+                    })}
                     className="pointer-events-none absolute inset-y-0 left-0 bg-emerald-500/8 transition-[width]"
                     style={{ width: depthBarWidth }}
-                    aria-hidden
                   />
 
                   <span role="cell" className="relative font-semibold text-white">

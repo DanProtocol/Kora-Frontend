@@ -3,12 +3,15 @@ import { Buffer } from "node:buffer";
 import { verifyUploadToken } from "@/lib/security";
 import { logger } from "@/lib/logger";
 import { verifyCsrf } from "@/lib/csrf";
+import { MAX_INVOICE_PDF_BYTES } from "@/lib/validations/upload";
 
 const PINATA_BASE = "https://api.pinata.cloud";
 const PINATA_JWT = process.env.PINATA_JWT ?? "";
 const VIRUSTOTAL_API_KEY = process.env.VIRUSTOTAL_API_KEY ?? "";
 
 // In-memory rate limit store: walletAddress -> timestamps (ms)
+// Note: Suitable only for single-instance deployments. For multi-instance deployments,
+// see docs/architecture.md#redis-migration-for-rate-limiting-and-shared-state.
 const RATE_LIMIT_WINDOW = 1000 * 60 * 60; // 1 hour
 const RATE_LIMIT_MAX = 10;
 const rateLimitMap = new Map<string, number[]>();
@@ -17,6 +20,8 @@ const rateLimitMap = new Map<string, number[]>();
 // Note: This in-memory storage is suitable only for a single-instance deployment.
 // In a multi-instance (autoscaled or serverless) environment, the rate limit state
 // will not be shared across instances. For multi-instance, use a centralized store like Redis.
+// See docs/architecture.md#redis-migration-for-rate-limiting-and-shared-state for key schemas,
+// TTLs, sequence flow, and fallback behavior.
 const IP_RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
 const IP_RATE_LIMIT_MAX = 10;
 const ipRateLimitMap = new Map<string, number[]>();
@@ -196,8 +201,7 @@ export async function POST(req: NextRequest) {
       const buffer = Buffer.from(arrayBuffer);
 
       // Size check
-      const MAX_BYTES = 10 * 1024 * 1024; // 10MB
-      if (buffer.length > MAX_BYTES) return NextResponse.json({ error: "File too large", requestId }, { status: 400 });
+      if (buffer.length > MAX_INVOICE_PDF_BYTES) return NextResponse.json({ error: "File too large", requestId }, { status: 400 });
 
       // Magic byte validation for PDF: %PDF-
       const magic = buffer.slice(0, 5).toString("utf8");

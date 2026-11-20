@@ -1,4 +1,24 @@
 {
+  "metadata": {
+    "investorDashboard": {
+      "title": "Investor Dashboard",
+      "description": "Track your positions, yield and portfolio performance on Kora Protocol.",
+      "ogDescription": "Monitor your Kora Protocol investments, yield and repayment activity.",
+      "ogImageAlt": "Kora Protocol investor dashboard"
+    },
+    "smeDashboard": {
+      "title": "SME Dashboard",
+      "description": "Manage your invoices, financing and repayments on Kora Protocol.",
+      "ogDescription": "Track invoice financing and repayments from your Kora Protocol SME dashboard.",
+      "ogImageAlt": "Kora Protocol SME dashboard"
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "Manage your Kora Protocol notifications, thresholds and preferences.",
+      "ogDescription": "Configure notifications, concentration thresholds and preferences on Kora Protocol.",
+      "ogImageAlt": "Kora Protocol settings"
+    }
+  },
   "nav": {
     "marketplace": "Marketplace",
     "invest": "Invest",
@@ -49,7 +69,31 @@
     "reconnect": "Reconnect Wallet",
     "reconnecting": "Reconnecting...",
     "restoringSession": "Restoring wallet session...",
-    "balanceLoadFailed": "Failed to load balances"
+    "balanceLoadFailed": "Failed to load balances",
+    "unfundedAccountTitle": "Activate your Stellar account",
+    "unfundedAccountDescription": "This account has no XLM yet. Fund it to activate the wallet and load balances.",
+    "fundWithXlm": "Fund with XLM using Friendbot",
+    "walletConnected": "Wallet connected",
+    "redirecting": "Taking you to your dashboard…",
+    "mobileApp": "Mobile app",
+    "openInApp": "Open in app",
+    "deepLinkWaiting": "Waiting for wallet app to open…",
+    "trustline": {
+      "eurc": {
+        "cta": "Add EURC trustline",
+        "adding": "Adding EURC…",
+        "loading": "Adding EURC trustline…",
+        "success": "EURC trustline added successfully",
+        "error": "Failed to add EURC trustline"
+      },
+      "usdc": {
+        "cta": "Add USDC trustline",
+        "adding": "Adding USDC…",
+        "loading": "Adding USDC trustline…",
+        "success": "USDC trustline added — balance will update shortly",
+        "error": "Failed to add USDC trustline"
+      }
+    }
   },
   "transaction": {
     "building": "Building transaction…",
@@ -195,6 +239,18 @@
       "clearCategories": "Clear Categories",
       "showAllStatuses": "Show All Statuses"
     },
+    "jurisdictionLabels": {
+      "US": "United States",
+      "EU": "European Union",
+      "UK": "United Kingdom",
+      "NG": "Nigeria",
+      "KE": "Kenya",
+      "GH": "Ghana",
+      "ZA": "South Africa",
+      "OTHER": "Other",
+      "IN": "India",
+      "BR": "Brazil"
+    },
     "categoryLabels": {
       "manufacturing": "Manufacturing",
       "services": "Services",
@@ -267,6 +323,14 @@
     "noDocumentTitle": "No document preview available",
     "noDocumentDesc": "This invoice does not have an attached PDF preview or document URL.",
     "pdfReady": "PDF ready for download",
+    "ipfsLoadingPreview": "Loading document preview…",
+    "ipfsRetry": "Retry",
+    "ipfsOpenInNewTab": "Open in new tab",
+    "ipfsErrorTitle": "Document preview unavailable",
+    "ipfsErrorDesc": "The IPFS gateway did not respond in time. You can retry or open the document directly.",
+    "ipfsOfflineTitle": "You're offline",
+    "ipfsOfflineDesc": "The document preview requires an internet connection.",
+    "ipfsDownloadPdf": "Download PDF",
     "raised": "{amount} raised",
     "percentOf": "{percent}% of {total}",
     "investors": "Investors",
@@ -369,6 +433,7 @@
       "errors": {
         "tooLarge": "File is too large. Max size is exactly 10MB.",
         "invalidType": "Invalid file type. Only PDF documents are allowed.",
+        "invalidMagicBytes": "Selected file is not a valid PDF document (missing %PDF- header).",
         "required": "Please upload the invoice PDF before minting.",
         "virusScanRejected": "File rejected by security scan",
         "virusScanRejectedDescription": "{reason} Please select a different file and try again.",
@@ -386,6 +451,10 @@
       "title": "Invoice Minted!",
       "subtitle": "Your invoice has been tokenized as an NFT on the Stellar Soroban network and is ready for funding.",
       "tokenId": "NFT Token ID",
+      "tokenIdFormatted": "#{id}",
+      "tokenPending": "Pending confirmation",
+      "syncingBadge": "Syncing",
+      "indexerLag": "Indexing in progress",
       "txHash": "Transaction Hash",
       "ipfsCid": "IPFS Metadata CID",
       "verifyStellar": "Verify on Stellar Expert",
@@ -422,6 +491,11 @@
       "description": "We found a saved draft from your previous session. Would you like to pick up where you left off?",
       "resume": "Resume Draft",
       "discard": "Discard"
+    },
+    "errors": {
+      "partialIpfsCleanup": "Invoice creation failed. Any files already uploaded to IPFS have been removed.",
+      "partialIpfsCleanupFailed": "Invoice creation failed. Some uploaded files could not be removed — they will expire automatically.",
+      "mintFailed": "Failed to prepare the invoice for signing. Please try again."
     }
   },
   "smeDashboard": {
@@ -458,6 +532,9 @@
       "message": "Create your first invoice to start raising liquidity."
     },
     "batch": {
+      "disabledTitle": "Batch actions are turned off",
+      "disabledDesc": "Batch cancel and repay are disabled on this deployment. Self-hosted operators can enable them by setting {envVar}=true.",
+      "disabledDocs": "Feature flag docs",
       "title": "Batch Operation Summary",
       "exportSelected": "Export selected",
       "processingLabel": "Cancelling {count} invoices..."
@@ -496,14 +573,34 @@
     "browseMarketplace": "Browse Marketplace",
     "connectTitle": "Connect your wallet",
     "connectDesc": "Connect to view your investment portfolio",
+    "connectWallet": {
+      "title": "Connect your wallet",
+      "description": "Connect to view your investment portfolio and start earning yield."
+    },
+    "error": {
+      "title": "Failed to load portfolio",
+      "description": "We couldn't fetch your positions. Check your connection and try again.",
+      "timeout": "Loading your portfolio is taking longer than usual. Please retry.",
+      "retry": "Retry"
+    },
     "stats": {
       "portfolioValue": "Portfolio Value",
       "expectedYield": "Expected Yield",
+      "expectedReturn": "Expected Return",
+      "yieldEarned": "Yield Earned",
       "activePositions": "Active Positions",
       "avgApr": "Avg. APR",
       "activePositionsChange": "{count} active positions",
       "returnChange": "{percent}% return",
       "acrossPositions": "Across all positions"
+    },
+    "allocation": {
+      "title": "Portfolio Allocation"
+    },
+    "positions": {
+      "title": "Your Positions",
+      "count": "{count} position",
+      "empty": "No positions match the current filter."
     },
     "table": {
       "invoice": "Invoice",
@@ -515,16 +612,29 @@
       "risk": "Risk",
       "dueDate": "Due Date",
       "claim": "Claim",
-      "view": "View →"
+      "view": "View →",
+      "listForSale": "List for Sale",
+      "unlist": "Unlist"
+    },
+    "listing": {
+      "success": "Position listed for sale"
     },
     "activePositions": "Active Positions",
     "allocationRisk": "Allocation by Risk Tier",
     "allocationJurisdiction": "Allocation by Jurisdiction",
     "empty": {
-      "title": "No positions",
+      "title": "No positions yet",
+      "description": "Fund invoices on the marketplace to start building your portfolio.",
       "message": "Fund invoices on the marketplace to build your portfolio."
     },
-    "fundTestnet": "Fund Testnet Account"
+    "fundTestnet": "Fund Testnet Account",
+    "export": {
+      "csv": "Export CSV",
+      "pdf": "Export PDF",
+      "csvAriaLabel": "Export portfolio positions as CSV",
+      "pdfAriaLabel": "Export portfolio positions as PDF",
+      "emptyTooltip": "No positions to export"
+    }
   },
   "transactions": {
     "title": "Transaction History",
@@ -780,7 +890,10 @@
     "error": "Error",
     "rpcDown": "RPC Down",
     "rpcDegraded": "RPC Degraded",
-    "statusAriaLabel": "Network status: {status} on {network}"
+    "statusAriaLabel": "Network status: {status} on {network}",
+    "horizonDegradedToast": "Horizon is responding slowly",
+    "horizonDownToast": "Horizon is unavailable",
+    "horizonToastHint": "Balances and transaction history may be out of date. Please try again in a few minutes."
   },
   "offline": {
     "title": "You're offline",
@@ -818,7 +931,14 @@
     "statusSuccess": "Submitted",
     "statusError": "Failed",
     "statusPending": "Queued",
-    "badgeAriaLabel": "{count} pending transaction(s)"
+    "statusExhausted": "Max retries reached",
+    "badgeAriaLabel": "{count} pending transaction(s)",
+    "retryIn": "Retry in {seconds}s",
+    "retryExhausted": "Maximum retries reached",
+    "retryExhaustedDesc": "This transaction could not be submitted after 5 attempts. Copy the signed XDR to resubmit manually, or discard it.",
+    "copyXdrAriaLabel": "Copy signed XDR to clipboard",
+    "xdrCopied": "Signed XDR copied to clipboard",
+    "xdrCopyFailed": "Failed to copy XDR"
   },
   "notFound": {
     "title": "Page not found",
@@ -835,6 +955,12 @@
     "tryAgain": "Try Again",
     "goHome": "Go Home",
     "goMarketplace": "Go to Marketplace"
+  },
+  "globalError": {
+    "title": "Something went wrong",
+    "description": "A critical error stopped the application from loading. Reload the page to try again.",
+    "tryAgain": "Try Again",
+    "reload": "Reload page"
   },
   "common": {
     "loading": "Loading…",
@@ -872,7 +998,9 @@
     "title": "Wrong Network",
     "message": "Wrong Network: Connected to {current}, but this app requires {expected}{passphrase}. Please switch your wallet network to continue.",
     "passphraseMismatch": " (passphrase mismatch)",
-    "dismiss": "Dismiss wrong network warning"
+    "dismiss": "Dismiss wrong network warning",
+    "fix": "Fix",
+    "switchNetwork": "Switch Network"
   },
   "addressBook": {
     "title": "Address Book",
@@ -933,13 +1061,61 @@
     "gotIt": "Got it"
   },
   "settings": {
+    "error": {
+      "title": "Couldn't load settings",
+      "description": "Something went wrong while loading your settings. Please try again."
+    },
     "title": "Settings",
     "subtitle": "Manage notification preferences and your product tour.",
     "connectTitle": "Connect your wallet",
     "connectDesc": "Settings are stored per wallet. Connect to view and change your preferences.",
     "connectCta": "Connect wallet",
     "navLabel": "Settings",
-    "openFull": "Open full settings"
+    "openFull": "Open full settings",
+    "notifications": {
+      "sectionTitle": "Notification Preferences",
+      "sectionDesc": "Control which in-app alerts appear during your workflow.",
+      "maturityReminder": {
+        "label": "Maturity Reminders",
+        "description": "Remind you before invoice maturity date."
+      },
+      "fundingAlerts": {
+        "label": "Funding Alerts",
+        "description": "Notify when your invoice reaches funding milestones."
+      },
+      "repaymentAlerts": {
+        "label": "Repayment Alerts",
+        "description": "Notify when repayment is due or completed."
+      },
+      "reminderTiming": {
+        "label": "Reminder timing",
+        "description": "Choose when to alert before maturity date.",
+        "day1": "1 day before maturity",
+        "day3": "3 days before maturity",
+        "day7": "7 days before maturity"
+      },
+      "resetDefaults": "Reset to defaults",
+      "toggleAriaLabel": "Toggle {label}",
+      "tourSection": {
+        "title": "Onboarding Tour"
+      },
+      "shortcutsSection": {
+        "title": "Keyboard Shortcuts",
+        "description": "Enable global keyboard shortcuts for faster navigation.",
+        "enableLabel": "Enable shortcuts",
+        "enableDesc": "Press {key} to view all shortcuts.",
+        "toggleAriaLabel": "Toggle keyboard shortcuts"
+      },
+      "diagnosticsSection": {
+        "title": "Support Diagnostics",
+        "description": "Export a redacted wallet session snapshot with network and feature-flag state.",
+        "exportButton": "Export diagnostics JSON",
+        "importButton": "Import diagnostics",
+        "exportNote": "Export includes provider, network, kit session flags, and feature flags. No secrets, seed phrases, JWTs, or full addresses are included.",
+        "importSuccess": "Diagnostics imported for local debug.",
+        "importFailed": "Diagnostics import failed."
+      }
+    }
   },
   "shortcuts": {
     "title": "Keyboard Shortcuts",
@@ -1201,9 +1377,25 @@
     "dismiss": "Dismiss",
     "snoozeDay": "Snooze 1 day",
     "snoozeWeek": "Snooze 1 week",
+    "diversifyCta": "Find diversification options",
     "settings": "Adjust thresholds",
     "critical": "Critical",
-    "warning": "Warning"
+    "warning": "Warning",
+    "thresholdsTitle": "Concentration thresholds",
+    "thresholdsDescription": "Flag your portfolio when a single debtor, jurisdiction, or risk tier exceeds these shares of its value.",
+    "dimensions": {
+      "debtor": "Single debtor",
+      "jurisdiction": "Single jurisdiction",
+      "riskTier": "Single risk tier"
+    },
+    "dimensionHints": {
+      "debtor": "Alert when one debtor exceeds this share of your portfolio.",
+      "jurisdiction": "Alert when one jurisdiction exceeds this share of your portfolio.",
+      "riskTier": "Alert when one risk tier exceeds this share of your portfolio."
+    },
+    "sliderAria": "{dimension} threshold slider",
+    "percentageAria": "{dimension} threshold percentage",
+    "resetToDefaults": "Reset to defaults"
   },
   "vintageCohorts": {
     "title": "Vintage cohorts",
@@ -1216,6 +1408,23 @@
     "empty": "No positions funded this month",
     "noData": "No funded positions to group yet.",
     "export": "Export cohorts"
+  },
+  "secondary": {
+    "filters": {
+      "tenor": {
+        "all": "All Tenors",
+        "0-30": "0 - 30 days",
+        "31-60": "31 - 60 days",
+        "61-90": "61 - 90 days",
+        "90+": "90+ days"
+      },
+      "yield": {
+        "0": "Any Yield",
+        "5": "5%+ Yield",
+        "10": "10%+ Yield",
+        "15": "15%+ Yield"
+      }
+    }
   },
   "secondaryMarket": {
     "title": "Secondary Market",
@@ -1361,5 +1570,66 @@
     "legendItemAria": "Browse marketplace filtered by {name}: {percent}",
     "filteringBy": "Filtering marketplace by <strong>{dimension}</strong>: {value}",
     "clearFilter": "Clear filter"
+  },
+  "kyc": {
+    "title": "Synaps KYC Verification",
+    "description": "Verify your identity with Synaps to unlock higher investment limits.",
+    "intro": {
+      "body": "To comply with global regulatory standards, you must verify your identity. The verification process is handled securely by Synaps and takes about 2 minutes.",
+      "requirementsTitle": "What you will need:",
+      "requirementId": "Government-issued ID or Passport",
+      "requirementSelfie": "Clear selfie photo",
+      "requirementAddress": "Proof of address (for higher tier limits)",
+      "start": "Start Verification Flow"
+    },
+    "upload": {
+      "docTypeLabel": "Select Document Type:",
+      "passport": "Passport",
+      "idCard": "National ID Card",
+      "dropzone": "Drag and drop your document here, or click to browse",
+      "dropzoneHint": "Accepts PDF, JPG, or PNG up to 10MB",
+      "back": "Back",
+      "verifySuccess": "Verify (Success)",
+      "verifyFail": "Verify (Fail)"
+    },
+    "verifying": {
+      "title": "Verifying Documents",
+      "body": "Synaps automated checks are analyzing your document and checking compliance databases..."
+    },
+    "success": {
+      "title": "Identity Verified Successfully!",
+      "body": "Thank you! Your KYC status is now verified. Your account investment limits have been upgraded.",
+      "continue": "Continue"
+    },
+    "failed": {
+      "title": "Verification Failed",
+      "body": "Synaps was unable to verify your document automatically. Make sure the document image is clear, uncropped, and all details are visible.",
+      "retry": "Try Again"
+    }
+  },
+  "pwa": {
+    "manifest": {
+      "shortcuts": {
+        "marketplace": {
+          "shortName": "Market",
+          "description": "Browse invoice listings"
+        },
+        "createInvoice": {
+          "shortName": "Create",
+          "description": "Tokenize a new invoice"
+        }
+      },
+      "screenshots": {
+        "wide": "Kora Protocol Marketplace",
+        "narrow": "Kora Protocol on Mobile"
+      }
+    }
+  },
+  "ui": {
+    "select": {
+      "loading": "Loading options…",
+      "optionsLoaded": "{count, plural, =0 {No options available} one {# option available} other {# options available}}",
+      "loadError": "Could not load options"
+    }
   }
 }

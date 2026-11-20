@@ -7,6 +7,7 @@ import {
   persistQueryClientSubscribe,
 } from "@tanstack/query-persist-client-core";
 import { Toaster } from "sonner";
+import { useWatchlistAlerts } from "@/hooks/useWatchlistAlerts";
 import { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 
@@ -47,12 +48,15 @@ import { ThemeProvider } from "@/components/layout/ThemeProvider";
 import { VerificationProvider } from "@/components/wallet/VerificationProvider";
 import { LocaleProvider } from "@/i18n/LocaleProvider";
 import { useUIStore } from "@/store/uiStore";
+import { useWalletStore } from "@/store/walletStore";
+import { useSettingsStore } from "@/store/settingsStore";
 import { useFeatureFlag } from "@/lib/featureFlags";
 import {
   createIndexedDbPersister,
   MARKETPLACE_CACHE_MAX_AGE_MS,
   shouldPersistMarketplaceQuery,
 } from "@/lib/queryPersistence";
+import { AppLoadingShell } from "@/components/ui/AppLoadingShell";
 
 // Pre-load both locale message files at the module level so they are
 // bundled and available synchronously on the client.
@@ -103,10 +107,36 @@ function WatchlistAlertObserver() {
   return null;
 }
 
-export function Providers({ children }: { children: React.ReactNode }) {
+/**
+ * Keeps `settingsStore` scoped to the connected wallet (#992).
+ *
+ * The settings store persists per-wallet buckets (`kora-settings-store-${address}`)
+ * but has no way to observe wallet changes on its own. Subscribing to the wallet
+ * store's address here means connect, disconnect and account-switch all re-key
+ * and rehydrate persistence without any settings surface needing to know.
+ */
+function SettingsWalletSync() {
+  const address = useWalletStore((s) => s.address);
+  const isConnected = useWalletStore((s) => s.isConnected);
+
+  useEffect(() => {
+    useSettingsStore
+      .getState()
+      .setActiveWallet(isConnected ? address : null);
+  }, [isConnected, address]);
+
+  return null;
+}
+
+export function Providers({
+  children,
+  initialLocale,
+}: {
+  children: React.ReactNode;
+  initialLocale?: Locale;
+}) {
   const onboardingTourEnabled = useFeatureFlag("onboarding-tour");
   const devtoolsEnabled = useFeatureFlag("devtools");
-  const [isPersistenceReady, setIsPersistenceReady] = useState(typeof window === "undefined");
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -116,12 +146,27 @@ export function Providers({ children }: { children: React.ReactNode }) {
       })
   );
 
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      setIsPersistenceReady(true);
-      return;
-    }
+  /**
+   * isPersistenceReady (#1017)
+   *
+   * Tracks whether `persistQueryClientRestore` has finished (or errored).
+   * While false we render `AppLoadingShell` instead of the blank app shell so
+   * users never see an empty white screen on slow devices or after install.
+   *
+   * SSR: typeof window === "undefined" means we're server-rendering — skip
+   * persistence entirely and set ready = true immediately so the server renders
+   * the full tree without flashing the skeleton on the first paint.
+   */
+  const [isPersistenceReady, setIsPersistenceReady] = useState(
+    () => typeof window === "undefined"
+  );
 
+  // The tree renders immediately rather than waiting for the restore: gating it
+  // on a client-only flag rendered `null` during hydration against server HTML
+  // that had the full tree, so React failed hydration and mounted a second copy
+  // of the app beside the first. Restoring into a live cache is safe — hydrate
+  // never overwrites newer query data.
+  useEffect(() => {
     const persister = createIndexedDbPersister();
     let unsubscribe: (() => void) | undefined;
     let cancelled = false;
@@ -146,9 +191,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
       } catch (error) {
         console.warn("[QueryPersistence] Failed to restore marketplace cache.", error);
       } finally {
-        if (!cancelled) {
-          setIsPersistenceReady(true);
-        }
+        // Always ungate — even on error, the app must become usable (#1017).
+        if (!cancelled) setIsPersistenceReady(true);
       }
     };
 
@@ -180,9 +224,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {!isPersistenceReady ? null : (
-      <LocaleProvider allMessages={ALL_MESSAGES}>
+      <LocaleProvider allMessages={ALL_MESSAGES} initialLocale={initialLocale}>
         <ThemeProvider>
+          {/* Show AppLoadingShell until IndexedDB restore completes (#1017).
+              QueryClientProvider and ThemeProvider are always mounted so the
+              query client is available throughout — children are hidden, not
+              unmounted, so providers can initialise without double-fetching. */}
+          {!isPersistenceReady && <AppLoadingShell />}
+          <div
+            style={isPersistenceReady ? undefined : { display: "none" }}
+            aria-hidden={!isPersistenceReady}
+          >
           {/* Raises the re-verification modal that `useVerifiedAction` awaits
               (#681). It was imported here but never mounted, so every gated
               action — fund, repay, and now claim — silently fell back to the
@@ -190,6 +242,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <VerificationProvider>
           {children}
           {onboardingTourEnabled && <OnboardingTour />}
+          <SettingsWalletSync />
           <WalletConnectModal />
           <InProgressOverlay />
           <TransactionAnnouncer />
@@ -204,9 +257,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
             <ReactQueryDevtools initialIsOpen={false} />
           )}
           </VerificationProvider>
+          </div>
         </ThemeProvider>
       </LocaleProvider>
-      )}
     </QueryClientProvider>
   );
 }

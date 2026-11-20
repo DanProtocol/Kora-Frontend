@@ -1,4 +1,24 @@
 {
+  "metadata": {
+    "investorDashboard": {
+      "title": "Painel do investidor",
+      "description": "Acompanhe suas posições, rendimento e desempenho da carteira na Kora Protocol.",
+      "ogDescription": "Monitore seus investimentos, rendimento e atividade de pagamento na Kora Protocol.",
+      "ogImageAlt": "Painel do investidor da Kora Protocol"
+    },
+    "smeDashboard": {
+      "title": "Painel de PMEs",
+      "description": "Gerencie suas faturas, financiamento e pagamentos na Kora Protocol.",
+      "ogDescription": "Acompanhe o financiamento de faturas e os pagamentos no painel de PMEs da Kora Protocol.",
+      "ogImageAlt": "Painel de PMEs da Kora Protocol"
+    },
+    "settings": {
+      "title": "Configurações",
+      "description": "Gerencie suas notificações, limites e preferências na Kora Protocol.",
+      "ogDescription": "Configure notificações, limites de concentração e preferências na Kora Protocol.",
+      "ogImageAlt": "Configurações da Kora Protocol"
+    }
+  },
   "nav": {
     "marketplace": "Mercado",
     "invest": "Investir",
@@ -49,7 +69,31 @@
     "reconnect": "Reconectar Carteira",
     "reconnecting": "Reconectando...",
     "restoringSession": "Restaurando sessão da carteira...",
-    "balanceLoadFailed": "Falha ao carregar saldos"
+    "balanceLoadFailed": "Falha ao carregar saldos",
+    "unfundedAccountTitle": "Ative sua conta Stellar",
+    "unfundedAccountDescription": "Esta conta ainda não tem XLM. Adicione fundos para ativá-la e carregar os saldos.",
+    "fundWithXlm": "Adicionar XLM com o Friendbot",
+    "walletConnected": "Carteira conectada",
+    "redirecting": "Levando você ao seu painel…",
+    "mobileApp": "Aplicativo móvel",
+    "openInApp": "Abrir no aplicativo",
+    "deepLinkWaiting": "Aguardando o aplicativo da carteira abrir…",
+    "trustline": {
+      "eurc": {
+        "cta": "Adicionar linha de confiança EURC",
+        "adding": "Adicionando EURC…",
+        "loading": "Adicionando linha de confiança EURC…",
+        "success": "Linha de confiança EURC adicionada com sucesso",
+        "error": "Falha ao adicionar linha de confiança EURC"
+      },
+      "usdc": {
+        "cta": "Adicionar linha de confiança USDC",
+        "adding": "Adicionando USDC…",
+        "loading": "Adicionando linha de confiança USDC…",
+        "success": "Linha de confiança USDC adicionada — saldo será atualizado em breve",
+        "error": "Falha ao adicionar linha de confiança USDC"
+      }
+    }
   },
   "transaction": {
     "building": "Construindo transação…",
@@ -167,6 +211,18 @@
       "dueSoonest": "Vencimento: Mais Próximo",
       "dueLatest": "Vencimento: Mais Distante",
       "newest": "Listadas Mais Recentemente"
+    },
+    "jurisdictionLabels": {
+      "US": "Estados Unidos",
+      "EU": "União Europeia",
+      "UK": "Reino Unido",
+      "NG": "Nigéria",
+      "KE": "Quênia",
+      "GH": "Gana",
+      "ZA": "África do Sul",
+      "OTHER": "Outro",
+      "IN": "Índia",
+      "BR": "Brasil"
     },
     "categoryLabels": {
       "manufacturing": "Manufatura",
@@ -303,7 +359,15 @@
     },
     "hint": {
       "minRemaining": "Mín: ${min} · Capacidade Restante: ${remaining}"
-    }
+    },
+    "ipfsLoadingPreview": "Carregando prévia do documento…",
+    "ipfsRetry": "Tentar novamente",
+    "ipfsOpenInNewTab": "Abrir em nova aba",
+    "ipfsErrorTitle": "Prévia do documento indisponível",
+    "ipfsErrorDesc": "O gateway IPFS não respondeu a tempo. Você pode tentar novamente ou abrir o documento diretamente.",
+    "ipfsOfflineTitle": "Você está offline",
+    "ipfsOfflineDesc": "A prévia do documento requer conexão com a internet.",
+    "ipfsDownloadPdf": "Baixar PDF"
   },
   "createInvoice": {
     "title": "Criar Fatura",
@@ -369,6 +433,7 @@
       "errors": {
         "tooLarge": "Arquivo muito grande. O tamanho máximo é exatamente 10MB.",
         "invalidType": "Tipo de arquivo inválido. Apenas documentos PDF são permitidos.",
+        "invalidMagicBytes": "O arquivo selecionado não é um documento PDF válido (cabeçalho %PDF- ausente).",
         "required": "Por favor, envie o PDF da fatura antes de criar o token.",
         "virusScanRejected": "Arquivo rejeitado pela verificação de segurança",
         "virusScanRejectedDescription": "{reason} Por favor, selecione um arquivo diferente e tente novamente.",
@@ -386,6 +451,10 @@
       "title": "Fatura Tokenizada!",
       "subtitle": "Sua fatura foi tokenizada como um NFT na rede Stellar Soroban e está pronta para receber financiamento.",
       "tokenId": "ID do Token NFT",
+      "tokenIdFormatted": "#{id}",
+      "tokenPending": "Confirmação pendente",
+      "syncingBadge": "Sincronizando",
+      "indexerLag": "Indexação em andamento",
       "txHash": "Hash da Transação",
       "ipfsCid": "CID de Metadados IPFS",
       "verifyStellar": "Verificar no Stellar Expert",
@@ -458,6 +527,9 @@
       "message": "Crie sua primeira fatura para começar a captar liquidez."
     },
     "batch": {
+      "disabledTitle": "As ações em lote estão desativadas",
+      "disabledDesc": "O cancelamento e o pagamento em lote estão desativados nesta implantação. Operadores auto-hospedados podem ativá-los definindo {envVar}=true.",
+      "disabledDocs": "Documentação de feature flags",
       "title": "Resumo da Operação em Lote",
       "exportSelected": "Exportar selecionados",
       "processingLabel": "Cancelando {count} fatura(s)..."
@@ -496,14 +568,34 @@
     "browseMarketplace": "Explorar Mercado",
     "connectTitle": "Conecte sua carteira",
     "connectDesc": "Conecte para visualizar sua carteira de investimentos",
+    "connectWallet": {
+      "title": "Conecte sua carteira",
+      "description": "Conecte para visualizar sua carteira de investimentos e começar a ganhar rendimentos."
+    },
+    "error": {
+      "title": "Falha ao carregar carteira",
+      "description": "Não foi possível buscar suas posições. Verifique sua conexão e tente novamente.",
+      "timeout": "O carregamento da sua carteira está demorando mais do que o habitual. Por favor, tente novamente.",
+      "retry": "Tentar novamente"
+    },
     "stats": {
       "portfolioValue": "Valor da Carteira",
       "expectedYield": "Rendimento Esperado",
+      "expectedReturn": "Retorno Esperado",
+      "yieldEarned": "Rendimento Obtido",
       "activePositions": "Posições Ativas",
       "avgApr": "APR Médio",
       "activePositionsChange": "{count} posição(ões) ativa(s)",
       "returnChange": "{percent}% de retorno",
       "acrossPositions": "Em todas as posições"
+    },
+    "allocation": {
+      "title": "Alocação da Carteira"
+    },
+    "positions": {
+      "title": "Suas Posições",
+      "count": "{count} posição",
+      "empty": "Nenhuma posição corresponde ao filtro atual."
     },
     "table": {
       "invoice": "Fatura",
@@ -515,16 +607,29 @@
       "risk": "Risco",
       "dueDate": "Vencimento",
       "claim": "Resgatar",
-      "view": "Ver →"
+      "view": "Ver →",
+      "listForSale": "Colocar à venda",
+      "unlist": "Retirar"
+    },
+    "listing": {
+      "success": "Posição colocada à venda"
     },
     "activePositions": "Posições Ativas",
     "allocationRisk": "Alocação por Nível de Risco",
     "allocationJurisdiction": "Alocação por Jurisdição",
     "empty": {
-      "title": "Nenhuma posição",
+      "title": "Nenhuma posição ainda",
+      "description": "Financie faturas no mercado para começar a construir sua carteira.",
       "message": "Financie faturas no mercado para construir sua carteira."
     },
-    "fundTestnet": "Financiar Conta Testnet"
+    "fundTestnet": "Financiar Conta Testnet",
+    "export": {
+      "csv": "Exportar CSV",
+      "pdf": "Exportar PDF",
+      "csvAriaLabel": "Exportar posições como CSV",
+      "pdfAriaLabel": "Exportar posições como PDF",
+      "emptyTooltip": "Nenhuma posição para exportar"
+    }
   },
   "transactions": {
     "title": "Histórico de Transações",
@@ -780,7 +885,10 @@
     "lastUpdated": "Last updated {time}",
     "rpcDown": "RPC Down",
     "rpcDegraded": "RPC Degraded",
-    "statusAriaLabel": "Network status: {status} on {network}"
+    "statusAriaLabel": "Network status: {status} on {network}",
+    "horizonDegradedToast": "O Horizon está respondendo lentamente",
+    "horizonDownToast": "O Horizon está indisponível",
+    "horizonToastHint": "Saldos e histórico de transações podem estar desatualizados. Tente novamente em alguns minutos."
   },
   "offline": {
     "title": "Você está offline",
@@ -818,7 +926,14 @@
     "statusSuccess": "Enviado",
     "statusError": "Falhou",
     "statusPending": "Na fila",
-    "badgeAriaLabel": "{count} transação(ões) pendente(s)"
+    "badgeAriaLabel": "{count} transação(ões) pendente(s)",
+    "statusExhausted": "Número máximo de tentativas atingido",
+    "retryIn": "Tentar novamente em {seconds}s",
+    "retryExhausted": "Máximo de tentativas atingido",
+    "retryExhaustedDesc": "Esta transação não pôde ser enviada após 5 tentativas. Copie o XDR assinado para reenviar manualmente ou descarte-o.",
+    "copyXdrAriaLabel": "Copiar XDR assinado para a área de transferência",
+    "xdrCopied": "XDR assinado copiado para a área de transferência",
+    "xdrCopyFailed": "Falha ao copiar o XDR"
   },
   "notFound": {
     "title": "Página não encontrada",
@@ -835,6 +950,12 @@
     "tryAgain": "Tentar Novamente",
     "goHome": "Ir para o Início",
     "goMarketplace": "Ir para o Mercado"
+  },
+  "globalError": {
+    "title": "Algo deu errado",
+    "description": "Um erro crítico impediu o carregamento do aplicativo. Recarregue a página para tentar novamente.",
+    "tryAgain": "Tentar Novamente",
+    "reload": "Recarregar página"
   },
   "common": {
     "loading": "Carregando…",
@@ -872,7 +993,9 @@
     "title": "Rede Incorreta",
     "message": "Rede Incorreta: Conectado a {current}, mas este aplicativo requer {expected}{passphrase}. Por favor, mude a rede da sua carteira para continuar.",
     "passphraseMismatch": " (incompatibilidade de frase secreta)",
-    "dismiss": "Fechar aviso de rede incorreta"
+    "dismiss": "Fechar aviso de rede incorreta",
+    "fix": "Corrigir",
+    "switchNetwork": "Mudar Rede"
   },
   "addressBook": {
     "title": "Agenda de Endereços",
@@ -933,13 +1056,61 @@
     "gotIt": "Entendi"
   },
   "settings": {
+    "error": {
+      "title": "Não foi possível carregar as configurações",
+      "description": "Algo deu errado ao carregar suas configurações. Tente novamente."
+    },
     "title": "Configurações",
     "subtitle": "Gerencie as preferências de notificação e o tour do produto.",
     "connectTitle": "Conecte sua carteira",
     "connectDesc": "As configurações são salvas por carteira. Conecte-se para ver e alterar suas preferências.",
     "connectCta": "Conectar carteira",
     "navLabel": "Configurações",
-    "openFull": "Abrir configurações completas"
+    "openFull": "Abrir configurações completas",
+    "notifications": {
+      "sectionTitle": "Preferências de Notificação",
+      "sectionDesc": "Controle quais alertas aparecem durante seu fluxo de trabalho.",
+      "maturityReminder": {
+        "label": "Lembretes de Vencimento",
+        "description": "Lembrar antes da data de vencimento da fatura."
+      },
+      "fundingAlerts": {
+        "label": "Alertas de Financiamento",
+        "description": "Notificar quando sua fatura atingir marcos de financiamento."
+      },
+      "repaymentAlerts": {
+        "label": "Alertas de Reembolso",
+        "description": "Notificar quando o reembolso estiver próximo ou concluído."
+      },
+      "reminderTiming": {
+        "label": "Momento do lembrete",
+        "description": "Escolha quando alertar antes da data de vencimento.",
+        "day1": "1 dia antes do vencimento",
+        "day3": "3 dias antes do vencimento",
+        "day7": "7 dias antes do vencimento"
+      },
+      "resetDefaults": "Restaurar padrões",
+      "toggleAriaLabel": "Alternar {label}",
+      "tourSection": {
+        "title": "Tour de Integração"
+      },
+      "shortcutsSection": {
+        "title": "Atalhos de Teclado",
+        "description": "Ative atalhos de teclado globais para navegação mais rápida.",
+        "enableLabel": "Ativar atalhos",
+        "enableDesc": "Pressione {key} para ver todos os atalhos.",
+        "toggleAriaLabel": "Alternar atalhos de teclado"
+      },
+      "diagnosticsSection": {
+        "title": "Diagnósticos de Suporte",
+        "description": "Exporte um instantâneo redatado de sessão de carteira com estado de rede e feature flags.",
+        "exportButton": "Exportar JSON de diagnósticos",
+        "importButton": "Importar diagnósticos",
+        "exportNote": "A exportação inclui provedor, rede, flags de sessão e feature flags. Nenhum segredo, frase-semente, JWT ou endereço completo é incluído.",
+        "importSuccess": "Diagnósticos importados para depuração local.",
+        "importFailed": "Falha ao importar diagnósticos."
+      }
+    }
   },
   "shortcuts": {
     "title": "Atalhos de Teclado",
@@ -1219,9 +1390,25 @@
     "dismiss": "Dispensar",
     "snoozeDay": "Adiar 1 dia",
     "snoozeWeek": "Adiar 1 semana",
+    "diversifyCta": "Encontrar opções de diversificação",
     "settings": "Ajustar limites",
     "critical": "Crítico",
-    "warning": "Aviso"
+    "warning": "Aviso",
+    "thresholdsTitle": "Limites de concentração",
+    "thresholdsDescription": "Sinalize sua carteira quando um único devedor, jurisdição ou nível de risco exceder estas proporções do seu valor.",
+    "dimensions": {
+      "debtor": "Devedor único",
+      "jurisdiction": "Jurisdição única",
+      "riskTier": "Nível de risco único"
+    },
+    "dimensionHints": {
+      "debtor": "Alerta quando um devedor exceder esta proporção da sua carteira.",
+      "jurisdiction": "Alerta quando uma jurisdição exceder esta proporção da sua carteira.",
+      "riskTier": "Alerta quando um nível de risco exceder esta proporção da sua carteira."
+    },
+    "sliderAria": "Controle deslizante do limite: {dimension}",
+    "percentageAria": "Percentual do limite: {dimension}",
+    "resetToDefaults": "Restaurar padrões"
   },
   "vintageCohorts": {
     "title": "Safras por mês",
@@ -1234,6 +1421,23 @@
     "empty": "Nenhuma posição financiada neste mês",
     "noData": "Ainda não há posições financiadas para agrupar.",
     "export": "Exportar safras"
+  },
+  "secondary": {
+    "filters": {
+      "tenor": {
+        "all": "Todos os Prazos",
+        "0-30": "0 - 30 dias",
+        "31-60": "31 - 60 dias",
+        "61-90": "61 - 90 dias",
+        "90+": "90+ dias"
+      },
+      "yield": {
+        "0": "Qualquer Rendimento",
+        "5": "5%+ de Rendimento",
+        "10": "10%+ de Rendimento",
+        "15": "15%+ de Rendimento"
+      }
+    }
   },
   "secondaryMarket": {
     "title": "Mercado Secundário",
@@ -1361,5 +1565,66 @@
     "legendItemAria": "Explorar o marketplace filtrado por {name}: {percent}",
     "filteringBy": "Filtrando o marketplace por <strong>{dimension}</strong>: {value}",
     "clearFilter": "Limpar filtro"
+  },
+  "kyc": {
+    "title": "Verificação KYC com Synaps",
+    "description": "Verifique sua identidade com a Synaps para desbloquear limites de investimento maiores.",
+    "intro": {
+      "body": "Para cumprir os padrões regulatórios globais, você precisa verificar sua identidade. O processo de verificação é conduzido com segurança pela Synaps e leva cerca de 2 minutos.",
+      "requirementsTitle": "O que você vai precisar:",
+      "requirementId": "Documento de identidade oficial ou passaporte",
+      "requirementSelfie": "Uma selfie nítida",
+      "requirementAddress": "Comprovante de endereço (para limites de nível superior)",
+      "start": "Iniciar verificação"
+    },
+    "upload": {
+      "docTypeLabel": "Selecione o tipo de documento:",
+      "passport": "Passaporte",
+      "idCard": "Carteira de identidade",
+      "dropzone": "Arraste e solte seu documento aqui ou clique para procurar",
+      "dropzoneHint": "Aceita PDF, JPG ou PNG de até 10 MB",
+      "back": "Voltar",
+      "verifySuccess": "Verificar (sucesso)",
+      "verifyFail": "Verificar (falha)"
+    },
+    "verifying": {
+      "title": "Verificando documentos",
+      "body": "As verificações automáticas da Synaps estão analisando seu documento e consultando bases de dados de conformidade..."
+    },
+    "success": {
+      "title": "Identidade verificada com sucesso!",
+      "body": "Obrigado! Seu status KYC agora está verificado. Os limites de investimento da sua conta foram ampliados.",
+      "continue": "Continuar"
+    },
+    "failed": {
+      "title": "Falha na verificação",
+      "body": "A Synaps não conseguiu verificar seu documento automaticamente. Certifique-se de que a imagem do documento esteja nítida, sem cortes e com todos os dados visíveis.",
+      "retry": "Tentar novamente"
+    }
+  },
+  "pwa": {
+    "manifest": {
+      "shortcuts": {
+        "marketplace": {
+          "shortName": "Mercado",
+          "description": "Explorar as faturas listadas"
+        },
+        "createInvoice": {
+          "shortName": "Criar",
+          "description": "Tokenizar uma nova fatura"
+        }
+      },
+      "screenshots": {
+        "wide": "Mercado do Kora Protocol",
+        "narrow": "Kora Protocol no celular"
+      }
+    }
+  },
+  "ui": {
+    "select": {
+      "loading": "Carregando opções…",
+      "optionsLoaded": "{count, plural, =0 {Nenhuma opção disponível} one {# opção disponível} other {# opções disponíveis}}",
+      "loadError": "Não foi possível carregar as opções"
+    }
   }
 }

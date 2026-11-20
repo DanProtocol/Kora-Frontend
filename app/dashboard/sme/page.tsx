@@ -12,6 +12,7 @@ import { RepaymentDialog } from "@/components/invoice/RepaymentDialog";
 import { DashboardSkeleton, Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { BatchResultSummary } from "@/components/dashboard/BatchActionToolbar";
+import { BatchActionsDisabledNotice } from "@/components/dashboard/BatchActionsDisabledNotice";
 import {
   prepareCancelInvoice,
   prepareRepayInvoice,
@@ -267,6 +268,12 @@ export default function SMEDashboardPage() {
     [address, signTransaction]
   );
 
+  const hasNoInvoices = allMyInvoices.length === 0;
+  const hasOnlyCancelledInvoices =
+    allMyInvoices.length > 0 &&
+    allMyInvoices.every((inv) => inv.status === "cancelled");
+  const showFirstInvoiceEmptyState = hasNoInvoices || hasOnlyCancelledInvoices;
+
   if (!isConnected) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center px-4">
@@ -506,10 +513,27 @@ export default function SMEDashboardPage() {
         </Link>
       </div>
 
+      <BatchActionsDisabledNotice />
+
       {address && (
         <Suspense fallback={<StatsGridSkeleton />}>
           <SMEStatsGrid address={address} />
         </Suspense>
+      )}
+
+      {!invoicesQuery.isLoading && showFirstInvoiceEmptyState && (
+        <div className="mb-8">
+          <EmptyState
+            variant="no-invoices"
+            title={t("empty.firstInvoiceTitle")}
+            description={t("empty.firstInvoiceMessage")}
+            illustration={<FileText className="h-10 w-10 text-muted-foreground" />}
+            cta={{
+              label: t("empty.firstInvoiceCta"),
+              href: "/invoice/create",
+            }}
+          />
+        </div>
       )}
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -658,7 +682,9 @@ export default function SMEDashboardPage() {
             }
             isLoading={invoicesQuery.isLoading}
             emptyState={
-              statusFilter === "all"
+              showFirstInvoiceEmptyState
+                ? undefined
+                : statusFilter === "all"
                 ? {
                     title: t("empty.title"),
                     message: t("empty.message"),
@@ -835,3 +861,7 @@ export default function SMEDashboardPage() {
     </ErrorBoundary>
   );
 }
+
+// ErrorBoundary fallback parity: the shared ErrorBoundary component renders the
+// design-system fallback (see docs/design-system.md) so SME and investor
+// dashboards surface identical recovery affordances.

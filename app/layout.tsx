@@ -14,6 +14,8 @@ import { websiteSchema, organizationSchema, serializeSchema } from "@/lib/struct
 import { WebVitalsReporter } from "@/components/dev/WebVitalsReporter";
 import { WebVitalsPanel as WebVitalsPanelClient } from "@/components/dev/WebVitalsPanel";
 import { defaultLocale, locales, type Locale } from "@/i18n/config";
+import { THEME_INIT_SCRIPT, buildViewportThemeColor } from "@/lib/theme";
+import { localeToOgLocale } from "@/lib/localizedMetadata";
 
 const WebVitalsPanel =
   process.env.NODE_ENV === "development"
@@ -47,19 +49,6 @@ function generateHreflangAlternates(pathname: string = "/") {
   }
   
   return alternates;
-}
-
-/**
- * Map locale code to OpenGraph locale format.
- */
-function localeToOgLocale(locale: Locale): string {
-  const localeMap: Record<Locale, string> = {
-    en: "en_US",
-    es: "es_ES",
-    ar: "ar_SA",
-    "pt-BR": "pt_BR",
-  };
-  return localeMap[locale] || "en_US";
 }
 
 /**
@@ -173,17 +162,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
-  ],
+  // Light/dark browser-chrome colors come from `lib/theme` so the metadata
+  // export, the inline bootstrap script and ThemeProvider share one token set.
+  themeColor: buildViewportThemeColor(),
 };
-
-// Security: static compile-time string, zero user input — safe for dangerouslySetInnerHTML.
-// Runs synchronously before first paint to prevent flash of incorrect theme.
-// Reads the persisted zustand store from localStorage; falls back to
-// prefers-color-scheme when no explicit preference is stored ("system" or missing).
-const themeInitScript = `(function(){try{var s=JSON.parse(localStorage.getItem('kora-ui-store')||'{}');var t=(s.state&&s.state.theme)||'system';var r=t==='dark'?'dark':t==='light'?'light':window.matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.classList.add(r);}catch(e){document.documentElement.classList.add('dark');}})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = resolveServerLocale();
@@ -192,7 +174,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang={locale} dir={dir} suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        {/* Security: static compile-time string from lib/theme, zero user input — safe for dangerouslySetInnerHTML.
+            Runs synchronously before first paint to prevent flash of incorrect theme. */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         {/* Apple PWA meta — Next.js metadata API doesn't cover all apple-* tags */}
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
         <meta name="mobile-web-app-capable" content="yes" />
