@@ -181,7 +181,13 @@ export function importAddressBook(
 
   // Cap the number of entries. Excess entries are rejected (not silently
   // dropped) so the user can see exactly what was left out.
-  const maxEntries = Math.max(0, options?.maxEntries ?? MAX_IMPORT_ENTRIES);
+  // A non-finite override (NaN, Infinity) would make the comparison below
+  // always false and silently disable the cap, so fall back to the default.
+  const requested = options?.maxEntries;
+  const maxEntries =
+    typeof requested === "number" && Number.isFinite(requested)
+      ? Math.max(0, Math.floor(requested))
+      : MAX_IMPORT_ENTRIES;
   if (data.length > maxEntries) {
     result.warnings.push(
       `Import contains ${data.length} entries; only the first ${maxEntries} were processed`

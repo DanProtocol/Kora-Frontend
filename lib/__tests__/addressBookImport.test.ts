@@ -399,6 +399,14 @@ describe('Address Book Import Validation', () => {
       expect(result.warnings.some((w) => w.includes('only the first 2'))).toBe(true);
     });
 
+    it('falls back to MAX_IMPORT_ENTRIES when maxEntries is not finite', () => {
+      const entries = Array.from({ length: MAX_IMPORT_ENTRIES + 1 }, () => ({ address: 'invalid' }));
+      for (const maxEntries of [NaN, Infinity]) {
+        const result = importAddressBook(JSON.stringify(entries), { maxEntries });
+        expect(result.rejected.filter((r) => r.reason.startsWith('Exceeds import limit'))).toHaveLength(1);
+      }
+    });
+
     it('applies MAX_IMPORT_ENTRIES by default', () => {
       const entries = Array.from({ length: MAX_IMPORT_ENTRIES + 1 }, () => ({ address: 'invalid' }));
       const result = importAddressBook(JSON.stringify(entries));
