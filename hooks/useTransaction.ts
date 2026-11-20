@@ -13,6 +13,7 @@ import { mapSimulationError } from "@/lib/stellar/simulationErrors";
 import * as StellarSdk from "@stellar/stellar-sdk";
 import { useUIStore } from "@/store/uiStore";
 import { useTransactionStore } from "@/store/transactionStore";
+import { classifySigningError } from "@/lib/walletSigningError";
 import { useTransactionHistoryStore, type TxType } from "@/store/transactionHistoryStore";
 import type { TxState as UITxState } from "@/types";
 import { enqueueSignedXdr, flushQueuedXdrDrafts, type QueuedXdrDraft } from "@/lib/xdrDraftQueue";
@@ -104,6 +105,13 @@ export interface SimulationPreview {
 }
 
 const TOAST_ID = "kora-tx";
+/** Toast id for the "your signature was interrupted" retry prompt (#1121). */
+const RECOVERY_TOAST_ID = "kora-signature-recovery";
+/**
+ * Unsigned XDRs already offered back to the user as a retry prompt, so a
+ * route change that remounts a consumer does not re-raise the same toast.
+ */
+const surfacedRecoveries = new Set<string>();
 const MAX_POLL_ATTEMPTS = 30;
 const POLL_TIMEOUT_MS = 5 * 60 * 1000;
 const SIMULATION_TIMEOUT_MS = 10_000;
@@ -337,6 +345,45 @@ export function useTransaction() {
     [clearSigningTimer, provider, setTxState]
   );
 
+  /**
+   * Latest `execute`, written by an effect below. `resumeInterruptedSignature`
+   * is declared *before* `execute` so `execute`'s catch block can offer it as
+   * the failure toast's retry action; it calls back through this ref rather
+   * than a dependency, which would otherwise be a use-before-declaration.
+   */
+  const executeRef = useRef<((buildFn: () => Promise<string>) => Promise<string | null>) | null>(
+    null
+  );
+  /** Stops a double-clicked retry from signing the same XDR twice. */
+  const resumeInFlightRef = useRef(false);
+
+  /**
+   * Resume an interrupted signature (#1121).
+   *
+   * The stored XDR is re-signed verbatim — no rebuild, no new sequence number
+   * — so the retry produces the same transaction the wallet never answered
+   * for. Because the interrupted attempt never reached the network, that
+   * re-sign cannot duplicate a submission; the in-flight guard covers the
+   * remaining case of two retries racing each other.
+   *
+   * Returns the transaction hash, or null when there was nothing to resume or
+   * the attempt failed (the failure path already raised its own toast).
+   */
+  const resumeInterruptedSignature = useCallback(async (): Promise<string | null> => {
+    const recovery = useTransactionStore.getState().signatureRecovery;
+    if (!recovery || resumeInFlightRef.current) return null;
+
+    // Clear first: if this attempt is interrupted too, the catch below records
+    // it again with the same XDR instead of losing it.
+    useTransactionStore.getState().clearSignatureRecovery();
+    resumeInFlightRef.current = true;
+    try {
+      return await executeRef.current?.(async () => recovery.unsignedXdr);
+    } finally {
+      resumeInFlightRef.current = false;
+    }
+  }, []);
+
   const execute = useCallback(
     async (
       buildFn: () => Promise<string>,
@@ -364,6 +411,13 @@ export function useTransaction() {
     ): Promise<string | null> => {
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
+      /**
+       * Unsigned XDR of the attempt currently in flight, kept only between the
+       * signing prompt and a successful signature — once signed, the envelope
+       * (not the unsigned XDR) is what must be retried, so recovery is cleared
+       * to prevent a re-sign of an already-submitted transaction (#1121).
+       */
+      let unsignedForRecovery: string | null = null;
 
       try {
         // Check network first
@@ -450,6 +504,8 @@ export function useTransaction() {
           canExtend: true,
         });
 
+        unsignedForRecovery = unsignedXdr;
+
         let signedXdr: string;
         if (unsignedXdr.startsWith("mock_")) {
           await new Promise((r) => setTimeout(r, 600));
@@ -476,6 +532,10 @@ export function useTransaction() {
           signedXdr = await Promise.race([signPromise, timeoutPromise]);
           clearSigningTimer();
         }
+
+        // Signature in hand: from here the *signed* envelope is what could be
+        // retried (see the offline queue below), never the unsigned XDR.
+        unsignedForRecovery = null;
 
         if (abortController.signal.aborted) {
           throw new Error("SIGNING_CANCELLED");
@@ -573,6 +633,24 @@ export function useTransaction() {
           return null;
         }
 
+        const kind = classifySigningError(err);
+        // Only an interruption *during the signature prompt* leaves an unsigned
+        // XDR worth resuming; anything after it (submit/poll) is already
+        // covered by the offline queue and must not trigger a re-sign.
+        const recoverable = kind === "interrupted" && unsignedForRecovery !== null;
+
+        if (recoverable && unsignedForRecovery) {
+          useTransactionStore.getState().setSignatureRecovery({
+            unsignedXdr: unsignedForRecovery,
+            reason: kind,
+            detail: errMessage,
+            createdAt: Date.now(),
+          });
+          // This session already showed the retry prompt above — mark it so the
+          // rehydrate effect does not raise a second, duplicate toast.
+          surfacedRecoveries.add(unsignedForRecovery);
+        }
+
         const message = err instanceof Error ? err.message : t("failed");
         setState({ status: "failed", error: message });
         setTxState({ status: "failed", error: { code: "TRANSACTION_FAILED", message } });
@@ -581,10 +659,15 @@ export function useTransaction() {
           updateTransactionStatus(state.txHash, "failed", message);
         }
 
+        // An interrupted signature failed silently — nothing was signed or
+        // submitted — so say that and offer the re-sign instead of reporting
+        // a failed transaction (#1121).
         toast.error(
-          t("failed"),
-          message,
-          options?.onRetry ?? (() => setState({ status: "idle" })),
+          recoverable ? t("signatureInterrupted") : t("failed"),
+          recoverable ? t("signatureInterruptedHint") : message,
+          recoverable
+            ? () => resumeInterruptedSignature()
+            : options?.onRetry ?? (() => setState({ status: "idle" })),
           TOAST_ID,
           "txConfirmed"
         );
@@ -607,12 +690,37 @@ export function useTransaction() {
       updateTransactionStatus,
       toast,
       t,
+      resumeInterruptedSignature,
     ]
   );
 
   const reset = useCallback(() => {
     cancel();
   }, [cancel]);
+
+  // Expose the latest `execute` to `resumeInterruptedSignature` (declared
+  // above it) without turning `execute` into a dependency of that callback.
+  useEffect(() => {
+    executeRef.current = execute;
+  });
+
+  /**
+   * An interruption that happened before a refresh is rehydrated from the
+   * persisted store, so offer the retry once per pending attempt (#1121).
+   */
+  useEffect(() => {
+    const recovery = useTransactionStore.getState().signatureRecovery;
+    if (!recovery || surfacedRecoveries.has(recovery.unsignedXdr)) return;
+    surfacedRecoveries.add(recovery.unsignedXdr);
+    toast.error(
+      t("signatureInterrupted"),
+      t("signatureInterruptedHint"),
+      // Returns the attempt's promise so callers (and tests) can await it.
+      () => resumeInterruptedSignature(),
+      RECOVERY_TOAST_ID,
+      undefined
+    );
+  }, [resumeInterruptedSignature, toast, t]);
 
   // Auto-flush the offline queue when the connection comes back online.
   // We use a stable submit helper so the effect doesn't need to close over
@@ -640,6 +748,11 @@ export function useTransaction() {
 
   return {
     execute,
+    /**
+     * Re-signs the stored unsigned XDR after an interrupted signature (#1121).
+     * No-op (returns null) when there is no pending attempt.
+     */
+    resumeInterruptedSignature,
     reset,
     cancel,
     extendTimeout,

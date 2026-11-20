@@ -278,7 +278,15 @@ export default function InvoiceDetailClient({ id }: { id: string }) {
     } else if (amountNum > fundingState.remainingCapacity) {
       inputError = `Amount exceeds remaining capacity of ${formatCurrency(fundingState.remainingCapacity, metadata.currency)}`;
     } else if (amountNum > kycThreshold && kycStatus !== "verified") {
-      inputError = `Investments above ${formatCurrency(kycThreshold, "USDC")} require KYC identity verification.`;
+      // A pending review is not the same as "never verified" — saying
+      // "please verify" to someone already in the queue reads as an error in
+      // our system rather than a wait (#1123).
+      inputError =
+        kycStatus === "pending"
+          ? `Your identity verification is pending review. Investments above ${formatCurrency(kycThreshold, "USDC")} can be made once it is approved.`
+          : kycStatus === "rejected"
+            ? `Your identity verification was rejected. Investments above ${formatCurrency(kycThreshold, "USDC")} require an approved verification.`
+            : `Investments above ${formatCurrency(kycThreshold, "USDC")} require KYC identity verification.`;
     }
   }
   const insufficientBalanceMessage =
@@ -309,10 +317,24 @@ export default function InvoiceDetailClient({ id }: { id: string }) {
       return;
     const kycThreshold = env.NEXT_PUBLIC_KYC_FUND_THRESHOLD;
     if (amountNum > kycThreshold && kycStatus !== "verified") {
-      toast.error(
-        "KYC Verification Required",
-        `Under regulatory compliance rules, investments exceeding ${formatCurrency(kycThreshold, "USDC")} require full identity verification. Please verify your KYC in settings to proceed.`
-      );
+      // Same three-way message as the inline input error, so the toast and the
+      // field never disagree about what the user still has to do (#1123).
+      if (kycStatus === "pending") {
+        toast.error(
+          "Verification pending review",
+          `Your identity verification is being reviewed. Investments exceeding ${formatCurrency(kycThreshold, "USDC")} can be made once it is approved.`
+        );
+      } else if (kycStatus === "rejected") {
+        toast.error(
+          "Verification rejected",
+          `Your identity verification was rejected. Investments exceeding ${formatCurrency(kycThreshold, "USDC")} require an approved verification — resubmit it in settings.`
+        );
+      } else {
+        toast.error(
+          "KYC Verification Required",
+          `Under regulatory compliance rules, investments exceeding ${formatCurrency(kycThreshold, "USDC")} require full identity verification. Please verify your KYC in settings to proceed.`
+        );
+      }
       return;
     }
 

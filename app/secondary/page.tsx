@@ -32,6 +32,7 @@ import { AcceptTransferDialog } from "@/components/invoice/AcceptTransferDialog"
 import { FeeDisclosure } from "@/components/secondary/FeeDisclosure";
 import { useAcquirePositionFlow, useTransferPositionFlow } from "@/hooks/useTransaction";
 import { useWallet } from "@/hooks/useWallet";
+import { useVerifiedAction } from "@/hooks/useVerifiedAction";
 import { env } from "@/lib/env";
 import { computeAcquisitionFees, getFeeSchedule } from "@/lib/secondaryFees";
 import { usePositionListingStore } from "@/store/positionListingStore";
@@ -88,6 +89,9 @@ function SecondaryMarketplaceContent() {
     simulationDialogProps: acceptSimulationDialogProps,
   } = useTransferPositionFlow();
   const { publicKey } = useWallet();
+  // Issue #1123: acquiring a position spends the buyer's funds, so it is gated
+  // exactly like funding an invoice — same session, same prompt.
+  const { executeProtectedAction } = useVerifiedAction();
 
   // Issue #597: one schedule, read from validated env, shared by every figure
   // on this page.
@@ -621,11 +625,24 @@ function SecondaryMarketplaceContent() {
           }}
           onConfirm={() => {
             if (acquireItem && publicKey) {
-              void acquirePosition(
-                acquireItem.positionId,
-                publicKey,
-                acquireItem.sellerAddress
-              );
+              const item = acquireItem;
+              void executeProtectedAction(
+                () => acquirePosition(item.positionId, publicKey, item.sellerAddress),
+                "funding"
+              ).then((result) => {
+                if (result.requiresVerification) {
+                  toast.error("Verification required", {
+                    description:
+                      "Verify wallet ownership before acquiring this position.",
+                  });
+                  return;
+                }
+                if (result.error && result.error !== "Wallet not connected") {
+                  toast.error("Could not start acquisition", {
+                    description: result.error,
+                  });
+                }
+              });
             }
           }}
         />

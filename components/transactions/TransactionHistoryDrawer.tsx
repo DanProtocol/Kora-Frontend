@@ -23,8 +23,18 @@ import { fetchTransactionDetails } from "@/lib/stellar/client";
 import type { TransactionRecord } from "@/store/transactionHistoryStore";
 import { cn } from "@/lib/utils";
 import { DatePicker } from "@/components/ui/date-picker";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { safeStellarTxUrl } from "@/lib/security";
 import { exportCsv } from "@/lib/export";
+import { useToast } from "@/hooks/useToast";
 import { useTranslations } from "next-intl";
 
 /**
@@ -384,6 +394,11 @@ export function TransactionHistoryDrawer({
   const getFilteredTransactions = useTransactionHistoryStore((s) => s.getFilteredTransactions);
   const clearHistory = useTransactionHistoryStore((s) => s.clearHistory);
   const [selectedTx, setSelectedTx] = useState<TransactionRecord | null>(null);
+  // In-app confirmation replaces the old `window.confirm`, whose title,
+  // description and buttons came from the browser's own locale and could not
+  // be translated by the app catalog (#1118).
+  const [confirmClearOpen, setConfirmClearOpen] = useState(false);
+  const toast = useToast();
 
   const filteredTransactions = getFilteredTransactions();
   const transactions = useMemo(
@@ -418,12 +433,14 @@ export function TransactionHistoryDrawer({
   };
 
   const handleClearHistory = () => {
-    if (
-      window.confirm(t("drawer.clearConfirm"))
-    ) {
-      clearHistory();
-      setSelectedTx(null);
-    }
+    setConfirmClearOpen(true);
+  };
+
+  const handleConfirmClearHistory = () => {
+    clearHistory();
+    setSelectedTx(null);
+    setConfirmClearOpen(false);
+    toast.success(t("drawer.clearCleared"), undefined, "tx-history-cleared");
   };
 
   return (
@@ -601,6 +618,35 @@ export function TransactionHistoryDrawer({
                 )}
               </div>
             )}
+
+            {/* Clear-history confirmation (#1118) — title, description and
+                actions all come from the app catalog so they follow the
+                selected locale instead of the browser's. */}
+            <Dialog open={confirmClearOpen} onOpenChange={setConfirmClearOpen}>
+              <DialogContent className="max-w-sm">
+                <DialogHeader>
+                  <DialogTitle>{t("drawer.clearConfirmTitle")}</DialogTitle>
+                  <DialogDescription>{t("drawer.clearConfirm")}</DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setConfirmClearOpen(false)}
+                  >
+                    {t("drawer.clearConfirmCancel")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={handleConfirmClearHistory}
+                    data-testid="confirm-clear-history"
+                  >
+                    {t("drawer.clearConfirmConfirm")}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </motion.div>
         </>
       )}

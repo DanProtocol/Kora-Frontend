@@ -30,6 +30,7 @@ import {
   type ConcentrationThresholds,
   type SnoozeEntry,
 } from "@/lib/concentrationRisk";
+import { createPersistentJSONStorage } from "@/store/storageAdapter";
 
 export type MaturityReminderDays = 1 | 3 | 7;
 export type Persona = "investor" | "sme";
@@ -261,6 +262,112 @@ export const DEFAULT_CONCENTRATION_SETTINGS: ConcentrationSettings = {
   snoozes: [],
 };
 
+/**
+ * Storage schema version (#1125).
+ *
+ * v0 wrote whatever was in memory with no validation, so a partial write, an
+ * older shape, or a hand-edited entry could put `stepIndex: "3"` or
+ * `persona: "admin"` into the tour state and strand the onboarding flow.
+ */
+export const SETTINGS_STORAGE_VERSION = 1;
+
+function asRecord(value: unknown): Record<string, unknown> {
+  return value !== null && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function sanitizeNotifications(
+  value: unknown,
+  fallback: NotificationPrefs,
+): NotificationPrefs {
+  const raw = asRecord(value);
+  const days = raw.maturityReminderDays;
+  return {
+    maturityReminder:
+      typeof raw.maturityReminder === "boolean"
+        ? raw.maturityReminder
+        : fallback.maturityReminder,
+    fundingAlerts:
+      typeof raw.fundingAlerts === "boolean" ? raw.fundingAlerts : fallback.fundingAlerts,
+    repaymentAlerts:
+      typeof raw.repaymentAlerts === "boolean"
+        ? raw.repaymentAlerts
+        : fallback.repaymentAlerts,
+    maturityReminderDays:
+      days === 1 || days === 3 || days === 7 ? days : fallback.maturityReminderDays,
+  };
+}
+
+/**
+ * The tour slice is the one that has to survive a refresh intact: `stepIndex`
+ * is what resumes the tour where the user left it (#1125), so it is coerced
+ * back to a safe integer rather than trusted.
+ */
+function sanitizeTour(value: unknown, fallback: TourSettings): TourSettings {
+  const raw = asRecord(value);
+  const stepIndex =
+    typeof raw.stepIndex === "number" && Number.isFinite(raw.stepIndex)
+      ? Math.max(0, Math.floor(raw.stepIndex))
+      : fallback.stepIndex;
+  return {
+    persona: raw.persona === "sme" ? "sme" : "investor",
+    stepIndex,
+    completed: raw.completed === true,
+    skipped: raw.skipped === true,
+  };
+}
+
+function sanitizeConcentration(
+  value: unknown,
+  fallback: ConcentrationSettings,
+): ConcentrationSettings {
+  const raw = asRecord(value);
+  const rawThresholds = asRecord(raw.thresholds);
+  const thresholds: ConcentrationThresholds = { ...fallback.thresholds };
+  for (const key of Object.keys(thresholds) as Array<keyof ConcentrationThresholds>) {
+    const candidate = rawThresholds[key];
+    if (typeof candidate === "number" && Number.isFinite(candidate) && candidate > 0) {
+      thresholds[key] = candidate;
+    }
+  }
+
+  const dismissedKeys = Array.isArray(raw.dismissedKeys)
+    ? raw.dismissedKeys.filter((key): key is string => typeof key === "string")
+    : [];
+
+  const snoozes: SnoozeEntry[] = Array.isArray(raw.snoozes)
+    ? raw.snoozes.filter((entry): entry is SnoozeEntry => {
+        if (entry === null || typeof entry !== "object") return false;
+        const { key, until } = entry as { key?: unknown; until?: unknown };
+        return (
+          typeof key === "string" &&
+          typeof until === "number" &&
+          Number.isFinite(until) &&
+          until > Date.now()
+        );
+      })
+    : [];
+
+  return { thresholds, dismissedKeys, snoozes };
+}
+
+/** Normalize whatever was read from storage into a complete settings slice. */
+function sanitizeSettings(value: unknown): Pick<
+  SettingsStore,
+  "notifications" | "tour" | "concentration"
+> {
+  const raw = asRecord(value);
+  return {
+    notifications: sanitizeNotifications(raw.notifications, DEFAULT_NOTIFICATION_PREFS),
+    tour: sanitizeTour(raw.tour, DEFAULT_TOUR_SETTINGS),
+    concentration: sanitizeConcentration(
+      raw.concentration,
+      DEFAULT_CONCENTRATION_SETTINGS,
+    ),
+  };
+}
+
 interface SettingsStore {
   notifications: NotificationPrefs;
   /** Per-wallet notification preferences, keyed by wallet address. */
@@ -448,6 +555,19 @@ export const useSettingsStore = create<SettingsStore>()(
       },
     }),
     {
+      name: "kora-settings-store",
+      // Safe storage with an in-memory fallback (#1125): a blocked or full
+      // localStorage must not break settings, and writes must be JSON.
+      storage: createPersistentJSONStorage(),
+      version: SETTINGS_STORAGE_VERSION,
+      // v0 → v1: same slices, but validated instead of trusted.
+      migrate: (persisted) => sanitizeSettings(persisted),
+      // Always run on rehydrate (same version too): fills any slice that is
+      // missing and drops fields that do not belong, without touching actions.
+      merge: (persisted, current) => ({
+        ...current,
+        ...sanitizeSettings(persisted),
+      }),
       name: settingsStorageKey(null),
       /**
        * Persist only the user-facing settings. `activeWallet` and

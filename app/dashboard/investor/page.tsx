@@ -214,6 +214,44 @@ export default function InvestorDashboardPage() {
     }
   };
 
+  /**
+   * Listing a position commits the seller's assets to the secondary market, so
+   * it runs through the same verification gate as funding/claim/repayment
+   * (#1123) — previously it called the store directly and skipped it.
+   */
+  const handleListSubmit = (askPrice: number) => {
+    if (!listingTarget) return;
+    const target = listingTarget;
+
+    const runListing = async () => {
+      listPosition({
+        positionId: target.id,
+        askPrice,
+        seller: address ?? "",
+      });
+      setListingTarget(null);
+    };
+
+    void executeProtectedAction(runListing, "listing").then((result) => {
+      // No VerificationProvider in the tree to raise the modal — tell the user
+      // why nothing happened instead of failing silently.
+      if (result.requiresVerification) {
+        toast.error(
+          "Verification required",
+          "Verify wallet ownership to list this position.",
+          () => {
+            handleListSubmit(askPrice);
+          },
+        );
+        return;
+      }
+
+      if (result.error && result.error !== "Wallet not connected") {
+        toast.error("Listing failed", result.error, () => {
+          handleListSubmit(askPrice);
+        });
+      }
+    });
   const handleListSubmit = (askPrice: number, expiresAt?: string) => {
     if (!listingTarget || !address) return;
     listPosition({
