@@ -585,3 +585,6 @@ the identical flow above using `buildAddTrustlineTx(address, "eurc")`.
 
 <!-- handsoff-issue-1169 -->
 - #1169: Feedback widget attach context (route, locale, wallet truncated)
+
+<!-- handsoff-issue-1175 -->
+- #1175: i18n: localize KYB gate and Synaps error bodies fully
